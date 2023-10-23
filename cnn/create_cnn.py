@@ -9,7 +9,7 @@ batch_size = 64
 num_classes = 10
 learning_rate = 0.001
 num_epochs = 10
-data_path = ',/cnn_data'
+data_path = './cnn_data'
 
 def create_cnn() -> CNN:
     # Device will determine whether to run the training on GPU or CPU.
