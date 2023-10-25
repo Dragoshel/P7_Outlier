@@ -1,11 +1,10 @@
 
 import time
 from cnn.cnn import CNN
-from loaders.data_loader import testing_data_loader
 from torch import device
 import torch
 
-def test_model(batch_size: int, device: device, model: CNN, data_path: str) -> None:
+def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: CNN) -> None:
     """Perform the testing of the models accuracy after finishing the training phase, during this no gradient descent
     is used, so no weights are adjusted.
 
@@ -14,9 +13,7 @@ def test_model(batch_size: int, device: device, model: CNN, data_path: str) -> N
         model (CNN): Model to train
         device (device): Configured device for running the training, either GPU or CPU
         data_path (str): Path for saving the data for training and validation
-    """    
-    test_loader = testing_data_loader(batch_size, data_path)
-    
+    """
     starttime = time.time()
     with torch.no_grad():
         correct = 0
