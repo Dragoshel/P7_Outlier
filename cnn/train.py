@@ -3,6 +3,7 @@ import time
 import torch
 from torch import device
 from cnn.cnn import CNN
+from utils.data_types import DataType
 from utils.images import show_images
 
 def train_model(epochs: int, training_loader: torch.utils.data.DataLoader, validation_loader: torch.utils.data.DataLoader, device: device, model: CNN, optimizer, criterion) -> tuple:
@@ -58,6 +59,7 @@ def _training_pass(training_loader: torch.utils.data.DataLoader, model: CNN, dev
     for i, (images, labels) in enumerate(training_loader):
         if i == 0:
             show_images(images, True)
+        labels = torch.tensor([DataType.NORMAL] * len(labels))
         images = images.to(device)
         labels = labels.to(device)
         
@@ -84,6 +86,7 @@ def _validation_pass(validation_loader: torch.utils.data.DataLoader, model: CNN,
     for i, (images, labels) in enumerate(validation_loader):
         if i == 0:
             show_images(images, True)
+        labels = torch.tensor([DataType.NORMAL] * len(labels))
         images = images.to(device)
         labels = labels.to(device)
         

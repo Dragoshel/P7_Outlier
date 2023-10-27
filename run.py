@@ -8,7 +8,6 @@ from dataloaders.train_loader import training_data_loaders
 # Counteract non-determinism
 random.seed(10)
 torch.manual_seed(10)
-torch.use_deterministic_algorithms(True)
 
 # Pick normal, abnormal and novelty class labels
 no_norms = 8
@@ -36,4 +35,4 @@ if __name__ == '__main__':
     test_loader = testing_data_loader(batch_size, data_path, no_outliers, normal_classes, novel_classes)
     
     print('Creating CNN')
-    cnn_model = create_cnn(num_epochs, training_loader, validation_loader, test_loader, no_norms)
+    cnn_model = create_cnn(num_epochs, training_loader, validation_loader, test_loader)

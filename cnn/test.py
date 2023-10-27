@@ -4,6 +4,8 @@ from cnn.cnn import CNN
 from torch import device
 import torch
 
+from utils.data_types import DataType
+
 def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: CNN) -> None:
     """Perform the testing of the models accuracy after finishing the training phase, during this no gradient descent
     is used, so no weights are adjusted.
@@ -19,6 +21,7 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
         correct = 0
         total = 0
         for images, labels in test_loader:            
+            labels = torch.tensor([DataType.NORMAL] * len(labels))
             images = images.to(device)
             labels = labels.to(device)
             outputs = model(images)

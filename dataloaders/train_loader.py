@@ -2,6 +2,7 @@ import random
 import numpy
 import torch
 import torchvision
+from utils.data_types import DataType
 
 from utils.normalizer import get_transform
 from torch.utils.data import Subset, DataLoader
@@ -25,8 +26,13 @@ def training_data_loaders(batch_size: int, data_path: str, labels: list) -> tupl
     training_set = torchvision.datasets.MNIST(data_path + '/training', train=True, transform=get_transform(), download=True)
     validation_set = torchvision.datasets.MNIST(data_path + '/validation', train=False, transform=get_transform(), download=True)
     
-    training_set = [{'normal':features} for (features, label) in training_set if label in labels]
-    validation_set = [{'normal':features} for (features, label) in validation_set if label in labels]
+    idx = [label for label in training_set.targets if label in labels]
+    training_set.data = training_set.data[idx]
+    training_set.targets = training_set.targets[idx]
+    
+    idx = [label for label in validation_set.targets if label in labels]
+    validation_set.data = validation_set.data[idx]
+    validation_set.targets = validation_set.targets[idx]
     
     training_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True, generator=generator)
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=False, generator=generator)

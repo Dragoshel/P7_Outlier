@@ -8,8 +8,8 @@ import torch.nn as nn
 # Define relevant variables for the ML task
 learning_rate = 0.001
 
-def create_cnn(num_epochs: int, train_loader: DataLoader, validate_loader: DataLoader, test_loader: DataLoader, no_norms: int) -> CNN:
-    model = CNN(no_norms)
+def create_cnn(num_epochs: int, train_loader: DataLoader, validate_loader: DataLoader, test_loader: DataLoader) -> CNN:
+    model = CNN()
     # Whether or not to run on GPU (cuda) or CPU
     if torch.cuda.is_available():
         model.cuda()
