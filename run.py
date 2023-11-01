@@ -32,7 +32,7 @@ if __name__ == '__main__':
     
     print('Creating data sets')
     training_loader, validation_loader = training_data_loaders(batch_size, data_path, normal_classes)
-    test_loader = testing_data_loader(batch_size, data_path, no_outliers, normal_classes, novel_classes)
+    test_loader = testing_data_loader(batch_size, data_path, no_outliers)
     
     print('Creating CNN')
-    cnn_model = create_cnn(num_epochs, training_loader, validation_loader, test_loader)
+    cnn_model = create_cnn(num_epochs, training_loader, validation_loader)

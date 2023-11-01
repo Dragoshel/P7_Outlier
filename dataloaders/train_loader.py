@@ -26,17 +26,12 @@ def training_data_loaders(batch_size: int, data_path: str, labels: list) -> tupl
     training_set = torchvision.datasets.MNIST(data_path + '/training', train=True, transform=get_transform(), download=True)
     validation_set = torchvision.datasets.MNIST(data_path + '/validation', train=False, transform=get_transform(), download=True)
     
-    idx = [label for label in training_set.targets if label in labels]
-    training_set.data = training_set.data[idx]
-    training_set.targets = training_set.targets[idx]
-    
-    idx = [label for label in validation_set.targets if label in labels]
-    validation_set.data = validation_set.data[idx]
-    validation_set.targets = validation_set.targets[idx]
+    training_set = Subset(training_set, [i for i, target in enumerate(training_set.targets) if target in labels])
+    validation_set = Subset(validation_set, [i for i, target in enumerate(validation_set.targets) if target in labels])
     
     training_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True, generator=generator)
     validation_loader = DataLoader(validation_set, batch_size=batch_size, shuffle=False, generator=generator)
-    
+
     print('Training set has {} instances'.format(len(training_set)))
     print('Validation set has {} instances'.format(len(validation_set)))
 
