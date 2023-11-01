@@ -1,10 +1,11 @@
-import copy
 import random
+
 import torch
 import torchvision
-from utils.normalizer import get_transform
-from torch.utils.data import DataLoader, Dataset, Subset
 from l2l.data import MetaDataset, UnionMetaDataset
+from torch.utils.data import DataLoader, Dataset, Subset
+
+from utils.normalizer import get_transform
 
 generator = torch.Generator()
 generator.manual_seed(0)
