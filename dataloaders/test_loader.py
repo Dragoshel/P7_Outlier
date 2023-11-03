@@ -2,7 +2,7 @@ import random
 
 import torch
 import torchvision
-from l2l.data import MetaDataset, UnionMetaDataset
+from learn2learn.data import MetaDataset, UnionMetaDataset
 from torch.utils.data import DataLoader, Dataset, Subset
 
 from utils.normalizer import get_transform

@@ -28,11 +28,10 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
             image = image.to(device)
             label = label.to(device)
             probabilities = model(image)
-            readable_probs = torch.exp(probabilities.cpu())
-            certainty, prediction = torch.max(readable_probs, 1)
-            if label in novel_labels:
+            certainty, prediction = torch.max(probabilities.data, 1)
+            if prediction in novel_labels:
                 certainty_scores[DataType.NOVEL].append(certainty)
-            elif label in normal_classes:
+            elif prediction in normal_classes:
                 certainty_scores[DataType.NORMAL].append(certainty)
                 normal_total += label.size(0)
                 normal_correct += (prediction == label).sum().item()
