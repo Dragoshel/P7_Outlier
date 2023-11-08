@@ -2,7 +2,7 @@
 import torch.nn as nn
 
 class CNN(nn.Module):
-    def __init__(self):
+    def __init__(self, no_normal: int):
         super(CNN, self).__init__()
         k = 3
                 
@@ -28,7 +28,7 @@ class CNN(nn.Module):
             nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Dropout(0.5),
-            nn.Linear(512, 3),
+            nn.Linear(512, no_normal),
             # Function for use with multi class clasification
             nn.LogSoftmax(dim=1)
         )

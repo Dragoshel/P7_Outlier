@@ -35,4 +35,7 @@ def _union_set(no_outliers: int, data_path: str) -> Dataset:
     number_set = torchvision.datasets.MNIST(data_path + '/testing/MNIST', train=False, transform=get_transform(), download=True)
     number_set = MetaDataset(number_set)
 
-    return UnionMetaDataset([outlier_set, number_set])
+    # the union order doesnt mach the dataset order
+    union = UnionMetaDataset([number_set, outlier_set])
+    return union
+    # return number_set works fine

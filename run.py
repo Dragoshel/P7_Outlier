@@ -38,7 +38,7 @@ if __name__ == '__main__':
         print('Creating train and validation sets')
         training_loader, validation_loader = training_data_loaders(batch_size, data_path)
         
-        cnn_model, _ = create_cnn(num_epochs, training_loader, validation_loader, device)
+        cnn_model, _ = create_cnn(num_epochs, training_loader, validation_loader, device, no_norms)
         print('Finished training, saving model...')
         torch.save(cnn_model, model_path)
 

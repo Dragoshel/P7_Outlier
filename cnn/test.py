@@ -25,9 +25,9 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
         }
         normal_correct = 0
         normal_total = 0
-        normal_labels = get_normal_classes()
+        normal_classes = get_normal_classes()
         novel_labels = get_novel_classes()
-        for image, label in test_loader:
+        for image, label in test_loader:  
             orig_label = label
             label = torch.tensor(index_labels(label.tolist()))
             image = image.to(device)
@@ -43,7 +43,7 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
                 normal_correct += (prediction == label).sum().item()
             else:
                 certainty_scores[DataType.OUTLIER].append(certainty)
-            
+                
         totaltime = round((time.time() - starttime), 2)
         print(f'Total time for testing: {totaltime}')
         print(f'Accuracy on normal data: {normal_correct/normal_total*100}%')
