@@ -6,6 +6,7 @@ from cnn.create_cnn import create_cnn
 from cnn.test import test_model
 from dataloaders.test_loader import testing_data_loader
 from dataloaders.train_loader import training_data_loaders
+from utils.classes import pick_classes, get_normal_classes
 
 # Counteract non-determinism
 random.seed(10)
@@ -23,31 +24,24 @@ data_path = './data'
 
 model_path = 'data/model.pth'
 
-
-def pick_normal_classes(no_normal: int) -> tuple:
-    mnist_classes = range(0, 10)
-    normal_classes = random.sample(mnist_classes, no_normal)
-    novel_classes = [no for no in mnist_classes if no not in normal_classes]
-    print('Normal classes: {}, Novelty classes: {}'.format(normal_classes, novel_classes))
-    return normal_classes, novel_classes
-
 if __name__ == '__main__':
     print('Initialising...')
-    normal_classes, novel_classes = pick_normal_classes(no_norms)
+    pick_classes(no_norms)
     if torch.cuda.is_available():
+        print('Using GPU')
         device = torch.device('cuda')
     else:
+        print('Using CPU')
         device= torch.device('cpu')
 
     if not os.path.exists(model_path):
-        print('Creating data sets')
-        training_loader, validation_loader = training_data_loaders(batch_size, data_path, normal_classes)
+        print('Creating train and validation sets')
+        training_loader, validation_loader = training_data_loaders(batch_size, data_path)
         
-        print('Creating CNN')
         cnn_model, _ = create_cnn(num_epochs, training_loader, validation_loader, device)
-
+        print('Finished training, saving model...')
         torch.save(cnn_model, model_path)
 
     cnn_model = torch.load(model_path).to(device)
     test_loader = testing_data_loader(1, data_path, no_outliers)
-    test_model(test_loader, device, cnn_model, novel_classes, normal_classes)
+    test_model(test_loader, device, cnn_model)

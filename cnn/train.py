@@ -5,6 +5,7 @@ from torch import device
 from cnn.cnn import CNN
 from utils.data_types import DataType
 from utils.images import show_images
+from utils.classes import index_labels
 
 def train_model(epochs: int, training_loader: torch.utils.data.DataLoader, validation_loader: torch.utils.data.DataLoader, device: device, model: CNN, optimizer, criterion) -> tuple:
     """Perform the training of the model, first running one training batch and then validating the models accuracy,
@@ -55,14 +56,13 @@ def _training_pass(training_loader: torch.utils.data.DataLoader, model: CNN, dev
 
     Returns:
         float: Loss of the given training pass
-    """    
+    """
     for i, (images, labels) in enumerate(training_loader):
         if i == 0:
             show_images(images, True)
-        labels = torch.tensor([DataType.NORMAL] * len(labels))
+        labels = torch.tensor(index_labels(labels.tolist()))
         images = images.to(device)
         labels = labels.to(device)
-        
         outputs = model(images)
         loss = criterion(outputs, labels)
         
@@ -86,10 +86,9 @@ def _validation_pass(validation_loader: torch.utils.data.DataLoader, model: CNN,
     for i, (images, labels) in enumerate(validation_loader):
         if i == 0:
             show_images(images, True)
-        labels = torch.tensor([DataType.NORMAL] * len(labels))
+        labels = torch.tensor(index_labels(labels.tolist()))
         images = images.to(device)
         labels = labels.to(device)
-        
         outputs = model(images)
         validity = criterion(outputs, labels)
     
