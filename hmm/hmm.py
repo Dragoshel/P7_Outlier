@@ -9,6 +9,7 @@ import torch.nn.functional as F
 
 from sklearn.metrics import classification_report
 
+import argparse
 import torch
 import numpy
 import random
@@ -36,8 +37,6 @@ N_DISTRIBUTIONS = 10
 N_DIMENSIONS = 28 * 28
 # num of training iternations hmm will do for every batch
 N_FIT_ITER = 100
-# num of models
-N_MODELS = 10
 # train data % subset
 N_TRAIN_DATA = 0.50
 
@@ -61,9 +60,7 @@ def create_distributions(num_dist, pref_sum, count):
     return dists
 
 
-models = []
-
-for digit in range(N_MODELS):
+def train_model(digit):
     model_path = f'output/model{digit}.pth'
 
     if os.path.exists(model_path):
@@ -98,28 +95,58 @@ for digit in range(N_MODELS):
 
         torch.save(model, model_path)
 
-    models.append(model)
+
+def test(models):
+    test_data_loader = DataLoader(test_data.data, shuffle=True, batch_size=100)
+
+    print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
+    y_true = test_data.targets
+    y_pred = []
+    for i, test_images in enumerate(test_data_loader):
+        print(f"Batch {i}")
+        test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
+        test_images = test_images.to(torch.int64)
+
+        probs = numpy.array([model.log_probability(test_images)
+                             for model in models])
+        probs = probs.transpose()
+
+        pred = [prob.argmax() for prob in probs]
+        y_pred.extend(pred)
+
+    print(classification_report(
+        y_true=y_true,
+        y_pred=y_pred,
+        target_names=test_data.classes)
+    )
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog='HMM classifier',
+        description="Builds a number of HMM's and creates a probability distribution over MNIST digits",
+        epilog='Hi mom!'
+    )
+
+    parser.add_argument('-c', '--num-classes', type=int, help='the number of output classes')
+    parser.add_argument('-d', '--digit', type=int, help='digit to train model on')
+    parser.add_argument('-a', '--all', action='store_true', help='wether to train models for all digits')
+
+    args = parser.parse_args()
+
+    models = []
+
+    if args.all:
+        for digit in range(args.num_classes):
+            train_model(digit)
+    else:
+        train_model(args.digit)
+
+    for digit in range(args.num_classes):
+        model = torch.load(f'output/model{digit}.pth')
+        models.append(model)
+
+    test(models)
 
 
-test_data_loader = DataLoader(test_data.data, shuffle=True, batch_size=100)
-
-print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
-y_true = test_data.targets
-y_pred = []
-for i, test_images in enumerate(test_data_loader):
-    print(f"Batch {i}")
-    test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
-    test_images = test_images.to(torch.int64)
-
-    probs = numpy.array([model.log_probability(test_images)
-                         for model in models])
-    probs = probs.transpose()
-
-    pred = [prob.argmax() for prob in probs]
-    y_pred.extend(pred)
-
-print(classification_report(
-    y_true=y_true,
-    y_pred=y_pred,
-    target_names=test_data.classes)
-)
+if __name__ == '__main__':
+    main()
