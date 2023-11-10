@@ -30,17 +30,20 @@ def get_norm_factor() -> float:
 
 
 # Model distribution initialisation parameters
-N_OBSERVATIONS = 256
+N_OBSERVATIONS = 256 # fixed
 PREFERRED_SUM = 0.8
-N_DISTRIBUTIONS = 10
+N_DISTRIBUTIONS = 50
 
 N_DIMENSIONS = 28 * 28
 # num of training iternations hmm will do for every batch
 N_FIT_ITER = 100
 # train data % subset
-N_TRAIN_DATA = 0.50
+N_TRAIN_DATA = 0.10
 
-print("[INFO] Loading the MNIST Dataset...")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"[INFO] Running on {device.type}...")
+
+print("[INFO] Loading the MNIST Dataset ...")
 train_data = MNIST(root='training', train=True,
                    download=True, transform=_transform)
 test_data = MNIST(root='testing', train=False,
@@ -77,76 +80,87 @@ def train_model(digit):
         )
 
         train_data_loader = DataLoader(
-            train_data_subset, shuffle=True, batch_size=len(train_data_subset))
+            train_data_subset, shuffle=True, batch_size=1000)
 
         # Setting up the base model
         distributions = create_distributions(
             N_DISTRIBUTIONS, PREFERRED_SUM, N_OBSERVATIONS)
-        model = DenseHMM(distributions, max_iter=N_FIT_ITER, verbose=True)
+        model = DenseHMM(distributions, max_iter=N_FIT_ITER, verbose=True).to(device)
 
         # Train model to fit sequences observed in a single number
+        print(f"[INFO] Fitting model for digit {digit} ...")
         for train_images in train_data_loader:
-            print(f"[INFO] Fitting model for digit {digit} ...")
-
+            train_images = train_images.to(device)
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
             train_images = train_images.to(torch.int64)
 
             model.fit(train_images)
+            # model.summarize(train_images)
+            print(f"[INFO] Finished batch ...")
+
+        print(f"[INFO] From summaries on digit {digit} ...")
+        # model.from_summaries()
 
         torch.save(model, model_path)
 
 
 def test(models):
     test_data_loader = DataLoader(test_data.data, shuffle=True, batch_size=100)
-
+    
     print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
     y_true = test_data.targets
     y_pred = []
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
+        test_images = test_images.to(device)
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
 
         probs = numpy.array([model.log_probability(test_images)
                              for model in models])
         probs = probs.transpose()
-
         pred = [prob.argmax() for prob in probs]
+
         y_pred.extend(pred)
 
     print(classification_report(
-        y_true=y_true,
-        y_pred=y_pred,
-        target_names=test_data.classes)
+       y_true=y_true,
+       y_pred=y_pred,
+       target_names=test_data.classes)
     )
 
-def main():
+def parse():
     parser = argparse.ArgumentParser(
         prog='HMM classifier',
         description="Builds a number of HMM's and creates a probability distribution over MNIST digits",
         epilog='Hi mom!'
     )
 
-    parser.add_argument('-c', '--num-classes', type=int, help='the number of output classes')
+    parser.add_argument('-c', '--num-classes', type=int, help='the number of output classes', default=10)
     parser.add_argument('-d', '--digit', type=int, help='digit to train model on')
-    parser.add_argument('-a', '--all', action='store_true', help='wether to train models for all digits')
+    parser.add_argument('-a', '--all', action='store_true', help='whether to train models for all digits')
+    parser.add_argument('-t', '--test', action='store_true', help='testing the entire model')
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    models = []
+def main():
+    args = parse()
+
+    if args.test:
+        models = []
+        for digit in range(args.num_classes):
+            # model = torch.load(f'output/model1.pth')
+            model = torch.load(f'output/model{digit}.pth')
+            models.append(model)
+
+        test(models)
+        return
 
     if args.all:
         for digit in range(args.num_classes):
             train_model(digit)
     else:
         train_model(args.digit)
-
-    for digit in range(args.num_classes):
-        model = torch.load(f'output/model{digit}.pth')
-        models.append(model)
-
-    test(models)
-
 
 if __name__ == '__main__':
     main()
