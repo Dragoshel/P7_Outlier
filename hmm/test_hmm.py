@@ -109,5 +109,5 @@ print_all_predictions(all_preds, all_probs)
 #print_predicted_label(all_preds)
 
 print('Probabilities:')
-print(exp(model.log_probability(test_sample)))
+print(model.log_probability(test_sample))
 #print(model.distributions.log_prob(test_sample))
