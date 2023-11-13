@@ -1,11 +1,12 @@
 
 import time
 from cnn.cnn import CNN
-from loaders.data_loader import testing_data_loader
+from utils.data_types import DataType
 from torch import device
 import torch
+from utils.classes import get_normal_classes, get_novel_classes, index_labels
 
-def test_model(batch_size: int, device: device, model: CNN, data_path: str) -> None:
+def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: CNN, labels: list) -> None:
     """Perform the testing of the models accuracy after finishing the training phase, during this no gradient descent
     is used, so no weights are adjusted.
 
@@ -14,20 +15,44 @@ def test_model(batch_size: int, device: device, model: CNN, data_path: str) -> N
         model (CNN): Model to train
         device (device): Configured device for running the training, either GPU or CPU
         data_path (str): Path for saving the data for training and validation
-    """    
-    test_loader = testing_data_loader(batch_size, data_path)
-    
+    """
     starttime = time.time()
     with torch.no_grad():
-        correct = 0
-        total = 0
-        for images, labels in test_loader:            
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-        
+        certainty_scores = {
+            DataType.NORMAL: [],
+            DataType.NOVEL: [],
+            DataType.OUTLIER: []
+        }
+        normal_correct = 0
+        normal_total = 0
+        normal_classes = get_normal_classes()
+        novel_labels = get_novel_classes()
+        for image, label in test_loader:  
+            orig_label = [labels[label]] if label < len(labels) else label.tolist()
+            label = torch.tensor(index_labels(orig_label))
+            image = image.to(device)
+            label = label.to(device)
+            probabilities = model(image)
+            readable_probs = torch.exp(probabilities.cpu())
+            certainty, prediction = torch.max(readable_probs, 1)
+            if orig_label[0] in novel_labels:
+                certainty_scores[DataType.NOVEL].append(certainty)
+            elif orig_label[0] in normal_classes:
+                certainty_scores[DataType.NORMAL].append(certainty)
+                # normal_total += label.size(0)
+                normal_total += 1
+                # normal_correct += (prediction == label).sum().item()
+                if prediction == label:
+                    normal_correct += 1
+            else:
+                certainty_scores[DataType.OUTLIER].append(certainty)
+                
         totaltime = round((time.time() - starttime), 2)
-        print('Accuracy of the network on the {} test images: {} %, Total time: {}'.format(50000, 100 * correct / total, totaltime))
+        print(f'Total time for testing: {totaltime}')
+        print(f'Accuracy on normal data: {normal_correct/normal_total*100}%')
+        print(f'Average accuracy on normal data: {sum(certainty_scores[DataType.NORMAL])/len(certainty_scores[DataType.NORMAL])*100}%')
+        print(f'Average accuracy on novel data: {sum(certainty_scores[DataType.NOVEL])/len(certainty_scores[DataType.NOVEL])*100}%')
+        print(f'Average accuracy on outlier data: {sum(certainty_scores[DataType.OUTLIER])/len(certainty_scores[DataType.OUTLIER])*100}%')
+        print(f'Amount of normal: {len(certainty_scores[DataType.NORMAL])}')
+        print(f'Amount of novel: {len(certainty_scores[DataType.NOVEL])}')
+        print(f'Amount of outlier: {len(certainty_scores[DataType.OUTLIER])}')
