@@ -85,14 +85,15 @@ def train_model(digit):
         # Setting up the base model
         distributions = create_distributions(
             N_DISTRIBUTIONS, PREFERRED_SUM, N_OBSERVATIONS)
-        model = DenseHMM(distributions, max_iter=N_FIT_ITER, verbose=True).to(device)
+        model = DenseHMM(distributions, max_iter=N_FIT_ITER, verbose=True)
+        model = model.cuda() if torch.cuda.is_available() else model
 
         # Train model to fit sequences observed in a single number
         print(f"[INFO] Fitting model for digit {digit} ...")
         for train_images in train_data_loader:
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
             train_images = train_images.to(torch.int64)
-            train_images = train_images.to(device)
+            train_images = train_images.cuda() if torch.cuda.is_available() else train_images
 
             model.fit(train_images)
             # model.summarize(train_images)
@@ -114,7 +115,7 @@ def test(models):
         print(f"Batch {i}")
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
-        test_images = test_images.to(device)
+        test_images = test_images.cuda() if torch.cuda.is_available() else test_images 
 
         probs = numpy.array([model.log_probability(test_images)
                              for model in models])
@@ -151,6 +152,7 @@ def main():
         for digit in range(args.num_classes):
             # model = torch.load(f'output/model1.pth')
             model = torch.load(f'output/model{digit}.pth')
+            model = model.cuda() if torch.cuda.is_available() else model
             models.append(model)
 
         test(models)
