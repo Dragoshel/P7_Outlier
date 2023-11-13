@@ -90,9 +90,9 @@ def train_model(digit):
         # Train model to fit sequences observed in a single number
         print(f"[INFO] Fitting model for digit {digit} ...")
         for train_images in train_data_loader:
-            train_images = train_images.to(device)
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
             train_images = train_images.to(torch.int64)
+            train_images = train_images.to(device)
 
             model.fit(train_images)
             # model.summarize(train_images)
@@ -112,9 +112,9 @@ def test(models):
     y_pred = []
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
-        test_images = test_images.to(device)
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
+        test_images = test_images.to(device)
 
         probs = numpy.array([model.log_probability(test_images)
                              for model in models])
