@@ -123,10 +123,9 @@ def test(models):
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
-        test_images = test_images.to(torch.int64).to(device)
+        test_images = test_images.to(torch.int64)
 
-        probs = numpy.array([model.log_probability(test_images)
-                             for model in models])
+        probs = numpy.array([model.log_probability(test_images).tolist() for model in models])
         probs = probs.transpose()
         pred = [prob.argmax() for prob in probs]
 
