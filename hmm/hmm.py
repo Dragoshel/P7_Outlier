@@ -32,7 +32,7 @@ def get_norm_factor() -> float:
 # Model distribution initialisation parameters
 N_OBSERVATIONS = 256 # fixed
 PREFERRED_SUM = 0.8
-N_DISTRIBUTIONS = 50
+N_DISTRIBUTIONS = 10
 
 N_DIMENSIONS = 28 * 28
 # num of training iternations hmm will do for every batch
@@ -51,19 +51,21 @@ test_data = MNIST(root='testing', train=False,
 
 
 def create_distributions(num_dist, pref_sum, count):
-    uniform_dist = Categorical([(numpy.ones(count) / count)])
+    global device
+    uniform_dist = Categorical([(numpy.ones(count) / count)]).to(device)
     dists = [uniform_dist]
     for i in range(num_dist):
         pref_size = int(count / 2 ** i)
         unpref_size = count - pref_size
         pref_part = numpy.array([pref_sum] * pref_size) / pref_size
         unpref_part = numpy.array([1 - pref_sum] * unpref_size) / unpref_size
-        dist = Categorical([numpy.concatenate([unpref_part, pref_part])])
+        dist = Categorical([numpy.concatenate([unpref_part, pref_part])]).to(device)
         dists.append(dist)
     return dists
 
 
 def train_model(digit):
+    global device
     model_path = f'output/model{digit}.pth'
 
     if os.path.exists(model_path):
@@ -92,8 +94,7 @@ def train_model(digit):
         print(f"[INFO] Fitting model for digit {digit} ...")
         for train_images in train_data_loader:
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
-            train_images = train_images.to(torch.int64)
-            train_images = train_images.cuda() if torch.cuda.is_available() else train_images
+            train_images = train_images.to(torch.int64).to(device)
 
             model.fit(train_images)
             # model.summarize(train_images)
@@ -106,6 +107,7 @@ def train_model(digit):
 
 
 def test(models):
+    global device
     test_data_loader = DataLoader(test_data.data, shuffle=True, batch_size=100)
     
     print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
@@ -114,8 +116,7 @@ def test(models):
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
-        test_images = test_images.to(torch.int64)
-        test_images = test_images.cuda() if torch.cuda.is_available() else test_images 
+        test_images = test_images.to(torch.int64).to(device)
 
         probs = numpy.array([model.log_probability(test_images)
                              for model in models])
@@ -131,6 +132,7 @@ def test(models):
     )
 
 def parse():
+    global device
     parser = argparse.ArgumentParser(
         prog='HMM classifier',
         description="Builds a number of HMM's and creates a probability distribution over MNIST digits",
@@ -145,14 +147,14 @@ def parse():
     return parser.parse_args()
 
 def main():
+    global device
     args = parse()
 
     if args.test:
         models = []
         for digit in range(args.num_classes):
             # model = torch.load(f'output/model1.pth')
-            model = torch.load(f'output/model{digit}.pth')
-            model = model.cuda() if torch.cuda.is_available() else model
+            model = torch.load(f'output/model{digit}.pth').to(device)
             models.append(model)
 
         test(models)
