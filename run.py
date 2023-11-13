@@ -43,5 +43,5 @@ if __name__ == '__main__':
         torch.save(cnn_model, model_path)
 
     cnn_model = torch.load(model_path).to(device)
-    test_loader = testing_data_loader(1, data_path, no_outliers)
-    test_model(test_loader, device, cnn_model)
+    test_loader, labels = testing_data_loader(1, data_path, no_outliers)
+    test_model(test_loader, device, cnn_model, labels)

@@ -6,7 +6,7 @@ from torch import device
 import torch
 from utils.classes import get_normal_classes, get_novel_classes, index_labels
 
-def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: CNN) -> None:
+def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: CNN, labels: list) -> None:
     """Perform the testing of the models accuracy after finishing the training phase, during this no gradient descent
     is used, so no weights are adjusted.
 
@@ -28,19 +28,22 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
         normal_classes = get_normal_classes()
         novel_labels = get_novel_classes()
         for image, label in test_loader:  
-            orig_label = label
-            label = torch.tensor(index_labels(label.tolist()))
+            orig_label = [labels[label]] if label < len(labels) else label.tolist()
+            label = torch.tensor(index_labels(orig_label))
             image = image.to(device)
             label = label.to(device)
             probabilities = model(image)
             readable_probs = torch.exp(probabilities.cpu())
             certainty, prediction = torch.max(readable_probs, 1)
-            if orig_label in novel_labels:
+            if orig_label[0] in novel_labels:
                 certainty_scores[DataType.NOVEL].append(certainty)
-            elif orig_label in normal_classes:
+            elif orig_label[0] in normal_classes:
                 certainty_scores[DataType.NORMAL].append(certainty)
-                normal_total += label.size(0)
-                normal_correct += (prediction == label).sum().item()
+                # normal_total += label.size(0)
+                normal_total += 1
+                # normal_correct += (prediction == label).sum().item()
+                if prediction == label:
+                    normal_correct += 1
             else:
                 certainty_scores[DataType.OUTLIER].append(certainty)
                 
@@ -50,3 +53,6 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
         print(f'Average accuracy on normal data: {sum(certainty_scores[DataType.NORMAL])/len(certainty_scores[DataType.NORMAL])*100}%')
         print(f'Average accuracy on novel data: {sum(certainty_scores[DataType.NOVEL])/len(certainty_scores[DataType.NOVEL])*100}%')
         print(f'Average accuracy on outlier data: {sum(certainty_scores[DataType.OUTLIER])/len(certainty_scores[DataType.OUTLIER])*100}%')
+        print(f'Amount of normal: {len(certainty_scores[DataType.NORMAL])}')
+        print(f'Amount of novel: {len(certainty_scores[DataType.NOVEL])}')
+        print(f'Amount of outlier: {len(certainty_scores[DataType.OUTLIER])}')
