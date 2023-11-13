@@ -16,6 +16,11 @@ import random
 import math
 import os
 
+random.seed(10)
+torch.manual_seed(10)
+generator = torch.Generator()
+generator.manual_seed(10)
+
 _norm_factor = 0.5
 # Transformations describing how we wish the data set to look
 # Normalize is chosen to normalize the distribution of the image tiles
@@ -32,15 +37,16 @@ def get_norm_factor() -> float:
 # Model distribution initialisation parameters
 N_OBSERVATIONS = 256 # fixed
 PREFERRED_SUM = 0.8
-N_DISTRIBUTIONS = 10
+N_DISTRIBUTIONS = 30
 
 N_DIMENSIONS = 28 * 28
 # num of training iternations hmm will do for every batch
 N_FIT_ITER = 100
 # train data % subset
-N_TRAIN_DATA = 0.10
+N_TRAIN_DATA = 0.50
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 print(f"[INFO] Running on {device.type}...")
 
 print("[INFO] Loading the MNIST Dataset ...")
@@ -82,20 +88,21 @@ def train_model(digit):
         )
 
         train_data_loader = DataLoader(
-            train_data_subset, shuffle=True, batch_size=1000)
+            train_data_subset, shuffle=True, batch_size=1000, generator=generator)
 
         # Setting up the base model
         distributions = create_distributions(
             N_DISTRIBUTIONS, PREFERRED_SUM, N_OBSERVATIONS)
         model = DenseHMM(distributions, max_iter=N_FIT_ITER, verbose=True)
-        model = model.cuda() if torch.cuda.is_available() else model
+        model = model.to(device)
 
         # Train model to fit sequences observed in a single number
         print(f"[INFO] Fitting model for digit {digit} ...")
         for train_images in train_data_loader:
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
             train_images = train_images.to(torch.int64).to(device)
-
+            
+            
             model.fit(train_images)
             # model.summarize(train_images)
             print(f"[INFO] Finished batch ...")
