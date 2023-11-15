@@ -1,7 +1,8 @@
-from loaders.data_loader import get_norm_factor
 import torchvision
 import matplotlib.pyplot as plt
 import numpy as np
+
+from utils.normalizer import get_norm_factor
 
 def show_images(images: list, one_channel: bool = False) -> None:
     """ Display images in the dataset in a 4x4 grid, before displaying the images

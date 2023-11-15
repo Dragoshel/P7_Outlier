@@ -29,21 +29,22 @@ _transform = transforms.Compose([
     transforms.Normalize((_norm_factor,), (_norm_factor,))
 ])
 
-
 def get_norm_factor() -> float:
     return _norm_factor
 
-
 # Model distribution initialisation parameters
-N_OBSERVATIONS = 256 # fixed
+N_OBSERVATIONS = 10
 PREFERRED_SUM = 0.8
-N_DISTRIBUTIONS = 30
+N_DISTRIBUTIONS = 10
 
 N_DIMENSIONS = 28 * 28
 # num of training iternations hmm will do for every batch
 N_FIT_ITER = 100
 # train data % subset
-N_TRAIN_DATA = 0.50
+N_TRAIN_DATA = 0.2
+
+# Grid size
+GRID_SIZE = 4
 
 #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
@@ -55,6 +56,24 @@ train_data = MNIST(root='training', train=True,
 test_data = MNIST(root='testing', train=False,
                   download=True, transform=_transform)
 
+def make_grid(image):
+    image = torch.flatten(image)
+    image = torch.reshape(image, [28,28])
+    h,w = image.shape
+    h =(h // GRID_SIZE) * GRID_SIZE
+    w = (w // GRID_SIZE) * GRID_SIZE
+    image = image[:h, :w]
+    image = image.reshape(h // GRID_SIZE, GRID_SIZE, -1, GRID_SIZE).swapaxes(1, 2).reshape(h // GRID_SIZE, w // GRID_SIZE, -1).sum(axis=-1) % N_OBSERVATIONS
+    return image
+
+def reform_images(images: list):
+    new_images = []
+    grid_sq = 28 // GRID_SIZE
+    for image in images:
+        new_image = make_grid(image)
+        new_image = new_image.reshape(grid_sq**2, 1)
+        new_images.append(new_image.tolist())
+    return torch.tensor(new_images)
 
 def create_distributions(num_dist, pref_sum, count):
     global device
@@ -88,12 +107,12 @@ def train_model(digit):
         )
 
         train_data_loader = DataLoader(
-            train_data_subset, shuffle=True, batch_size=1000, generator=generator)
+            train_data_subset, shuffle=True, batch_size=20000, generator=generator)
 
         # Setting up the base model
         distributions = create_distributions(
             N_DISTRIBUTIONS, PREFERRED_SUM, N_OBSERVATIONS)
-        model = DenseHMM(distributions, max_iter=N_FIT_ITER, verbose=True)
+        model = DenseHMM(distributions, verbose=True)
         model = model.to(device)
 
         # Train model to fit sequences observed in a single number
@@ -101,7 +120,7 @@ def train_model(digit):
         for train_images in train_data_loader:
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
             train_images = train_images.to(torch.int64).to(device)
-            
+            train_images = reform_images(train_images)
             
             model.fit(train_images)
             # model.summarize(train_images)
@@ -124,6 +143,8 @@ def test(models):
         print(f"Batch {i}")
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
+
+        test_images = reform_images(test_images)
 
         probs = numpy.array([model.log_probability(test_images).tolist() for model in models])
         probs = probs.transpose()
