@@ -33,15 +33,15 @@ def get_norm_factor() -> float:
     return _norm_factor
 
 # Model distribution initialisation parameters
-N_OBSERVATIONS = 10
+N_OBSERVATIONS = 50
 PREFERRED_SUM = 0.8
-N_DISTRIBUTIONS = 10
-
+N_DISTRIBUTIONS = 50
 N_DIMENSIONS = 28 * 28
 # num of training iternations hmm will do for every batch
 N_FIT_ITER = 100
 # train data % subset
-N_TRAIN_DATA = 0.2
+N_TRAIN_DATA = 0.1
+TRAIN_AMOUNT = int(50000*N_TRAIN_DATA)
 
 # Grid size
 GRID_SIZE = 4
@@ -68,15 +68,16 @@ def make_grid(image):
 
 def reform_images(images: list):
     new_images = []
+    new_smt = []
     grid_sq = 28 // GRID_SIZE
     for image in images:
         new_image = make_grid(image)
+        new_smt.append(new_image.tolist())
         new_image = new_image.reshape(grid_sq**2, 1)
         new_images.append(new_image.tolist())
-    return torch.tensor(new_images)
+    return torch.tensor(new_images), new_smt
 
 def create_distributions(num_dist, pref_sum, count):
-    global device
     uniform_dist = Categorical([(numpy.ones(count) / count)]).to(device)
     dists = [uniform_dist]
     for i in range(num_dist):
@@ -90,15 +91,15 @@ def create_distributions(num_dist, pref_sum, count):
 
 
 def train_model(digit):
-    global device
     model_path = f'output/model{digit}.pth'
 
-    if os.path.exists(model_path):
-        model = torch.load(model_path)
-    else:
+    if not os.path.exists(model_path):
         print(f"[INFO] Initializing model for digit {digit} ...")
         train_data_subset = [img for img, label in zip(
             train_data.data, train_data.targets) if label == digit]
+        train_targets = [label for img, label in zip(
+            train_data.data, train_data.targets) if label == digit]
+        
         keep = int(len(train_data_subset) * N_TRAIN_DATA)
         discard = int(len(train_data_subset) - keep)
         train_data_subset, _ = random_split(train_data_subset,
@@ -107,7 +108,7 @@ def train_model(digit):
         )
 
         train_data_loader = DataLoader(
-            train_data_subset, shuffle=True, batch_size=20000, generator=generator)
+            train_data_subset, shuffle=True, batch_size=TRAIN_AMOUNT, generator=generator)
 
         # Setting up the base model
         distributions = create_distributions(
@@ -117,41 +118,43 @@ def train_model(digit):
 
         # Train model to fit sequences observed in a single number
         print(f"[INFO] Fitting model for digit {digit} ...")
-        for train_images in train_data_loader:
+        for i, train_images in enumerate(train_data_loader):
             train_images = train_images.reshape(-1, N_DIMENSIONS, 1)
             train_images = train_images.to(torch.int64).to(device)
-            train_images = reform_images(train_images)
-            
-            model.fit(train_images)
-            # model.summarize(train_images)
-            print(f"[INFO] Finished batch ...")
+            train_images, train_smt = reform_images(train_images)
 
-        print(f"[INFO] From summaries on digit {digit} ...")
-        # model.from_summaries()
+            model.fit(train_images)
+            print(f"[INFO] Finished batch ...")
 
         torch.save(model, model_path)
 
 
 def test(models):
-    global device
-    test_data_loader = DataLoader(test_data.data, shuffle=True, batch_size=100)
+    test_data_loader = DataLoader(test_data.data, shuffle=False, batch_size=1000)
     
     print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
     y_true = test_data.targets
     y_pred = []
+    correct = 0
+    total = 0
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
+        orig_test_image = test_images
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
 
-        test_images = reform_images(test_images)
-
+        test_images, smt = reform_images(test_images)
         probs = numpy.array([model.log_probability(test_images).tolist() for model in models])
         probs = probs.transpose()
-        pred = [prob.argmax() for prob in probs]
+        preds = [prob.argmax() for prob in probs]
+        for j, pred in enumerate(preds):
+            if pred == y_true[i+j]:
+                correct += 1
+            total += 1
+        print(f'Correct: {correct}, Total: {total}, Pct: {correct/total*100}%')
+        y_pred.extend(preds)
 
-        y_pred.extend(pred)
-
+    print(f'Correct: {correct}, Total: {total}, Pct: {correct/total*100}%')
     print(classification_report(
        y_true=y_true,
        y_pred=y_pred,
@@ -159,7 +162,6 @@ def test(models):
     )
 
 def parse():
-    global device
     parser = argparse.ArgumentParser(
         prog='HMM classifier',
         description="Builds a number of HMM's and creates a probability distribution over MNIST digits",
@@ -174,7 +176,6 @@ def parse():
     return parser.parse_args()
 
 def main():
-    global device
     args = parse()
 
     if args.test:
