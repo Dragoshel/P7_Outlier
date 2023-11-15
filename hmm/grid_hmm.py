@@ -127,8 +127,6 @@ def test(models):
     print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
     y_true = test_data.targets
     y_pred = []
-    correct = 0
-    total = 0
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
         # Reshape images to match (batch_size, 784, 1) with int values
