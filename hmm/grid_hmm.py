@@ -47,9 +47,9 @@ N_TRAIN_DATA = 0.1
 TRAIN_AMOUNT = int(50000*N_TRAIN_DATA)
 
 print("[INFO] Loading the MNIST Dataset ...")
-train_data = MNIST(root='training', train=True,
+train_data = MNIST(root='data/hmm/training', train=True,
                    download=True, transform=_transform)
-test_data = MNIST(root='testing', train=False,
+test_data = MNIST(root='data/hmm/testing', train=False,
                   download=True, transform=_transform)
 
 def make_grid(image):

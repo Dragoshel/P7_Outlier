@@ -2,18 +2,16 @@
 import time
 from cnn.cnn import CNN
 from utils.data_types import DataType
-from torch import device
 import torch
 from utils.classes import get_normal_classes, get_novel_classes, index_labels
 
-def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: CNN, labels: list) -> None:
+def test_model(test_loader: torch.utils.data.DataLoader, model: CNN, labels: list) -> None:
     """Perform the testing of the models accuracy after finishing the training phase, during this no gradient descent
     is used, so no weights are adjusted.
 
     Args:
         batch_size (int): Amount of images to test with at a time
         model (CNN): Model to train
-        device (device): Configured device for running the training, either GPU or CPU
         data_path (str): Path for saving the data for training and validation
     """
     starttime = time.time()
@@ -30,8 +28,8 @@ def test_model(test_loader: torch.utils.data.DataLoader, device: device, model: 
         for image, label in test_loader:  
             orig_label = [labels[label]] if label < len(labels) else label.tolist()
             label = torch.tensor(index_labels(orig_label))
-            image = image.to(device)
-            label = label.to(device)
+            image = image
+            label = label
             probabilities = model(image)
             readable_probs = torch.exp(probabilities.cpu())
             certainty, prediction = torch.max(readable_probs, 1)

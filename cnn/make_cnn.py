@@ -35,7 +35,7 @@ def train():
 
 def test():
     cnn_model = torch.load(model_path)
-    test_loader, labels = testing_data_loader(batch_size, data_path, no_outliers)
+    test_loader, labels = testing_data_loader(1, data_path, no_outliers)
     test_model(test_loader, cnn_model, labels)
 
 def parse():
