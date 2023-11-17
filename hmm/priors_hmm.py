@@ -38,14 +38,6 @@ N_DIMENSIONS = 28 * 28
 # Grid size
 GRID_SIZE = 4
 
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
-print(f"[INFO] Running on {device.type}...")
-
-print("[INFO] Loading the MNIST Dataset ...")
-test_data = MNIST(root='testing', train=False,
-                  download=True, transform=_transform)
-
 def make_grid(image):
     image = torch.flatten(image)
     image = torch.reshape(image, [28,28])
@@ -65,9 +57,8 @@ def reform_images(images: list):
         new_images.append(new_image.tolist())
     return torch.tensor(new_images)
 
-def priors_hmm(models, images):
-    global device
-    print(f"Getting priors from HMM")
+def priors_hmms(models, images):
+    print(f"[INFO] Getting priors from HMM")
     test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
     test_images = test_images.to(torch.int64)
     test_images = reform_images(test_images)
@@ -76,7 +67,7 @@ def priors_hmm(models, images):
     probs = probs.transpose()
     return probs
 
-def load_models(folder_path: str) -> list:
+def load_hmms(folder_path: str) -> list:
     models = []
     for digit in range(args.num_classes):
         model = torch.load(f'{folder_path}/model{digit}.pth').to(device)
