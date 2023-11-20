@@ -70,12 +70,15 @@ def test(cnn, hmm):
     y_pred = []
     for i, test_images in enumerate(test_data_loader):
         print(f"Batch {i}")
-        cnn_probs = priors_cnn(cnn, test_images)
-        hmm_probs = priors_hmms(hmm, test_images)
-        for cnn_prob, hmm_prob in zip(cnn_probs, hmm_probs):
-            bayes_prob = calculate_bayes(hmm_prob, cnn_prob)
-            preds = [prob.argmax() for prob in bayes_prob]
-            y_pred.extend(preds)
+        for image in test_images:
+            image = image.to(torch.float32)
+            image = image.reshape(1, 1, 28, 28)
+            cnn_probs = priors_cnn(cnn, image)
+            hmm_probs = priors_hmms(hmm, image)
+            for cnn_prob, hmm_prob in zip(cnn_probs, hmm_probs):
+                bayes_prob = calculate_bayes(hmm_prob, cnn_prob)
+                preds = [prob.argmax() for prob in bayes_prob]
+                y_pred.extend(preds)
     print(classification_report(
         y_true=y_true,
         y_pred=y_pred,

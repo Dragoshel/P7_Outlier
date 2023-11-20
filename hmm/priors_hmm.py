@@ -32,6 +32,8 @@ _transform = transforms.Compose([
 def get_norm_factor() -> float:
     return _norm_factor
 
+N_OBSERVATIONS = 10
+
 # Image dimensions for flattening
 N_DIMENSIONS = 28 * 28
 
@@ -58,12 +60,11 @@ def reform_images(images: list):
     return torch.tensor(new_images)
 
 def priors_hmms(models, test_images):
-    print(f"[INFO] Getting priors from HMM")
     test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
     test_images = test_images.to(torch.int64)
     test_images = reform_images(test_images)
 
-    probs = numpy.array([model.log_probability(test_images).tolist() for model in models])
+    probs = numpy.array([model.probability(test_images).tolist() for model in models])
     probs = probs.transpose()
     return probs
 
