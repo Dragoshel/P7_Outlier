@@ -57,7 +57,7 @@ def reform_images(images: list):
         new_images.append(new_image.tolist())
     return torch.tensor(new_images)
 
-def priors_hmms(models, images):
+def priors_hmms(models, test_images):
     print(f"[INFO] Getting priors from HMM")
     test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
     test_images = test_images.to(torch.int64)
@@ -67,9 +67,9 @@ def priors_hmms(models, images):
     probs = probs.transpose()
     return probs
 
-def load_hmms(folder_path: str) -> list:
+def load_hmms(folder_path: str, num_classes) -> list:
     models = []
-    for digit in range(args.num_classes):
-        model = torch.load(f'{folder_path}/model{digit}.pth').to(device)
+    for digit in range(num_classes):
+        model = torch.load(f'{folder_path}/model{digit}.pth')
         models.append(model)
     return models

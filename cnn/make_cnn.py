@@ -62,7 +62,7 @@ if __name__ == '__main__':
         train()
         print('[INFO] Testing model')
         test()
-    elif args.test:
+    elif True:
         print('[INFO] Testing model')
         test()
     else:
