@@ -1,13 +1,19 @@
-import random
-import torch
-import os
 import argparse
+import os
+import random
+
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, random_split
+from torchvision.datasets import MNIST, FashionMNIST
 
 from cnn.create_cnn import create_cnn
 from cnn.test import test_model
 from dataloaders.test_loader import testing_data_loader
 from dataloaders.train_loader import training_data_loaders
-from utils.classes import pick_classes, get_normal_classes
+from utils.classes import get_normal_classes, pick_classes
+from utils.normalizer import get_transform
+from torch.utils.data import Subset, DataLoader
 
 # Counteract non-determinism
 random.seed(10)
@@ -37,6 +43,34 @@ def test():
     cnn_model = torch.load(model_path)
     test_loader, labels = testing_data_loader(1, data_path, no_outliers)
     test_model(test_loader, cnn_model, labels)
+
+def threshold(classes, test_data_size=5000, density=10):
+    generator = torch.Generator()
+    generator.manual_seed(10)
+
+    # test_data = FashionMNIST(root='data', train=True, download=True, transform=get_transform())
+    test_data = MNIST(root='data', train=True, download=True, transform=get_transform())
+    test_data = Subset(test_data, [i for i, target in enumerate(test_data.targets) if target in classes])
+
+    (test_data, _) = random_split(test_data,
+        [test_data_size, len(test_data) - test_data_size], generator=generator)
+    test_loader = DataLoader(test_data, batch_size, shuffle=False, generator=generator)
+
+    model = torch.load(model_path)
+    model.eval()
+
+    print(f'[INFO] Generating threshold on {test_data_size} datapoints...')
+    print(f'[INFO] Density of the thresholds is {density} ...')
+    thresholds = [0] * density
+    for images, targets in test_loader:
+        pred = model(images)
+        probs = F.softmax(pred, dim=1)
+        for prob in probs:
+            max_prob = torch.max(prob)
+            max_prob = int(max_prob * density)
+            thresholds[max_prob] += 1
+    for threshold in thresholds:
+        print('{:.2f}'.format(threshold / test_data_size), end=', ')
 
 def parse():
     parser = argparse.ArgumentParser(

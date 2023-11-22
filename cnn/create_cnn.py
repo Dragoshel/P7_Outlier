@@ -20,4 +20,4 @@ def create_cnn(num_epochs: int, train_loader: DataLoader, validate_loader: DataL
     print('Starting training of the model')
     train_model(num_epochs, train_loader, validate_loader, model, optimizer, criterion)
     
-    return model, device
+    return model

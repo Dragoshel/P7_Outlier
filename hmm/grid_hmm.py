@@ -2,8 +2,9 @@ from pomegranate.distributions import Normal, Categorical
 from pomegranate.hmm import DenseHMM, SparseHMM
 
 from torchvision.transforms import transforms, ToTensor
-from torchvision.datasets import KMNIST, MNIST
+from torchvision.datasets import KMNIST, MNIST, FashionMNIST
 from torch.utils.data import random_split, DataLoader, Subset
+from utils.normalizer import get_transform
 
 import torch.nn.functional as F
 
@@ -122,7 +123,8 @@ def train_model(digit):
         torch.save(model, model_path)
 
 def test(models):
-    test_data_loader = DataLoader(test_data.data, shuffle=False, batch_size=1000, generator=generator)
+    test_data_loader = DataLoader(test_data.data,
+        shuffle=False, batch_size=1000, generator=generator)
     
     print(f"[INFO] Testing model with {len(test_data)} datapoints ...")
     y_true = test_data.targets
@@ -145,6 +147,47 @@ def test(models):
        y_pred=y_pred,
        target_names=test_data.classes)
     )
+
+def threshold(models, classes, test_data_size=5000, density=10):
+    # test_data = MNIST(root='data', train=True, download=True, transform=_transform)
+    test_data = MNIST(root='data', train=False, download=True, transform=_transform)
+    # test_data = KMNIST(root='data', train=True, download=True, transform=_transform)
+    # test_data = FashionMNIST(root='data', train=True, download=True, transform=_transform)
+    test_data = Subset(test_data.data, [i for i, target in enumerate(test_data.targets) if target in classes])
+
+    # (test_data, _) = random_split(test_data,
+    #     [test_data_size, len(test_data) - test_data_size], generator=generator)
+    test_loader = DataLoader(test_data, batch_size=1000, shuffle=True, generator=generator)
+    thresholds = [0] * (density + 1)
+
+    counter = 0
+    for i, test_images in enumerate(test_loader):
+        test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
+        test_images = test_images.to(torch.int64)
+
+        test_images = reform_images(test_images)
+
+        probs = numpy.array([model.log_probability(test_images).tolist() for model in models])
+        probs = torch.tensor(probs.transpose())
+        probs = F.softmax(probs, dim=1)
+
+        for prob in probs:
+            try:
+                max_prob = torch.max(prob)
+                max_prob = int(max_prob * density)
+                thresholds[max_prob] += 1
+                counter += 1
+                if counter == test_data_size:
+                    break
+            except ValueError:
+                pass
+        if counter == test_data_size:
+            break
+
+    for threshold in thresholds:
+        print('{:.2f}'.format(threshold / test_data_size), end=', ')
+
+
 
 def parse():
     parser = argparse.ArgumentParser(
