@@ -13,15 +13,6 @@ generator.manual_seed(10)
 
 
 def testing_data_loader(batch_size: int, data_path: str, no_outliers: int) -> (DataLoader, list):
-    """ Downloads the testing data sets and saves it to the specified folder
-
-    Args:
-        batch_size (int): Size of the batches for each epoch
-        data_path (str): Path for saving the downloaded data
-
-    Returns:
-        DataLoader: Testing dataloader
-    """
     dataset, labels = _union_set(no_outliers, data_path)
     
     print('Testing set has {} instances'.format(len(dataset)))
@@ -37,12 +28,6 @@ def _union_set(no_outliers: int, data_path: str) -> (Dataset, list):
     number_set = torchvision.datasets.MNIST(data_path + '/testing/MNIST', train=False, download=True, transform=PILToTensor())
     number_set = MetaDataset(number_set)
 
-    # the union order doesnt mach the dataset order
-    # union = UnionMetaDataset([number_set, outlier_set])
-
     union = UnionMetaDataset([number_set, outlier_set])
 
-    # union = ConcatDataset([number_set, outlier_set])
-    # print(outlier_set.targets)
     return union, number_set.labels
-    # return number_set works fine

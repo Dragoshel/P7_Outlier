@@ -77,8 +77,6 @@ def train_model(digit):
         # Create train set for digit with predefined amount
         train_data_subset = [img for img, label in zip(
             train_data.data, train_data.targets) if label == digit]
-        train_targets = [label for img, label in zip(
-            train_data.data, train_data.targets) if label == digit]
         
         keep = int(len(train_data_subset) * N_TRAIN_DATA)
         discard = int(len(train_data_subset) - keep)

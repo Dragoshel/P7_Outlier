@@ -1,7 +1,7 @@
 import torch
 import torchvision
 
-from torchvision.transforms import ToTensor, PILToTensor
+from torchvision.transforms import PILToTensor
 from torch.utils.data import Subset, DataLoader
 from utils.classes import get_normal_classes
 
@@ -9,19 +9,6 @@ generator = torch.Generator()
 generator.manual_seed(0)
 
 def training_data_loaders(batch_size: int, data_path: str) -> tuple:
-    """Downloads training and validation sets for training the models.
-    The training set is shuffled to minimize the risk of overfitting the model
-    to a specific image. The validation set is not shuffled to allow for proper
-    validation of the model in terms of overfitting and accuracy.
-
-    Args:
-        batch_size (int): Size of the batches for each epoch
-        data_path (str): Path for saving the downloaded data
-
-    Returns:
-        tuple: Training and validation dataloader
-    """
-    
     training_set = torchvision.datasets.MNIST(data_path + '/training', train=True, transform=PILToTensor(), download=True)
     validation_set = torchvision.datasets.MNIST(data_path + '/validation', train=False, transform=PILToTensor(), download=True)
     labels = get_normal_classes()
