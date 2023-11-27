@@ -1,10 +1,9 @@
-from pomegranate.distributions import Normal, Categorical
-from pomegranate.hmm import DenseHMM, SparseHMM
+from pomegranate.distributions import Categorical
+from pomegranate.hmm import DenseHMM
 
-from torchvision.transforms import transforms, ToTensor
+from torchvision.transforms import ToTensor
 from torchvision.datasets import KMNIST, MNIST, FashionMNIST
 from torch.utils.data import random_split, DataLoader, Subset
-from utils.normalizer import get_transform
 
 import torch.nn.functional as F
 
@@ -14,7 +13,6 @@ import argparse
 import torch
 import numpy
 import random
-import math
 import os
 
 random.seed(10)
@@ -22,25 +20,14 @@ torch.manual_seed(10)
 generator = torch.Generator()
 generator.manual_seed(10)
 
-_norm_factor = 0.5
-# Transformations describing how we wish the data set to look
-# Normalize is chosen to normalize the distribution of the image tiles
-_transform = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((_norm_factor,), (_norm_factor,))
-])
-
-def get_norm_factor() -> float:
-    return _norm_factor
-
 # Image sizes for reformating
 GRID_SIZE = 4
 IMG_SIZE = 28
 
 # Model distribution initialisation parameters
-N_OBSERVATIONS = 10
+N_OBSERVATIONS = 50
 PREFERRED_SUM = 0.8
-N_DISTRIBUTIONS = 10
+N_DISTRIBUTIONS = 50
 N_DIMENSIONS = IMG_SIZE **2
 
 # train data % subset
@@ -48,10 +35,8 @@ N_TRAIN_DATA = 0.1
 TRAIN_AMOUNT = int(50000*N_TRAIN_DATA)
 
 print("[INFO] Loading the MNIST Dataset ...")
-train_data = MNIST(root='data/hmm/training', train=True,
-                   download=True, transform=_transform)
-test_data = MNIST(root='data/hmm/testing', train=False,
-                  download=True, transform=_transform)
+train_data = MNIST(root='data/hmm/training', train=True, download=True, transform=ToTensor())
+test_data = MNIST(root='data/hmm/testing', train=False, download=True, transform=ToTensor())
 
 def make_grid(image):
     image = torch.flatten(image)
@@ -85,7 +70,7 @@ def create_distributions(num_dist, pref_sum, count):
     return dists
 
 def train_model(digit):
-    model_path = f'output/model{digit}.pth'
+    model_path = f'models/model{digit}.pth'
 
     if not os.path.exists(model_path):
         print(f"[INFO] Initializing model for digit {digit} ...")
@@ -130,7 +115,6 @@ def test(models):
     y_true = test_data.targets
     y_pred = []
     for i, test_images in enumerate(test_data_loader):
-        print(f"Batch {i}")
         # Reshape images to match (batch_size, 784, 1) with int values
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
@@ -149,10 +133,10 @@ def test(models):
     )
 
 def threshold(models, classes, test_data_size=5000, density=10):
-    # test_data = MNIST(root='data', train=True, download=True, transform=_transform)
-    test_data = MNIST(root='data', train=False, download=True, transform=_transform)
-    # test_data = KMNIST(root='data', train=True, download=True, transform=_transform)
-    # test_data = FashionMNIST(root='data', train=True, download=True, transform=_transform)
+    # test_data = MNIST(root='data', train=True, download=True, transform=ToTensor())
+    test_data = MNIST(root='data', train=False, download=True, transform=ToTensor())
+    # test_data = KMNIST(root='data', train=True, download=True, transform=ToTensor())
+    # test_data = FashionMNIST(root='data', train=True, download=True, transform=ToTensor())
     test_data = Subset(test_data.data, [i for i, target in enumerate(test_data.targets) if target in classes])
 
     # (test_data, _) = random_split(test_data,
@@ -160,7 +144,6 @@ def threshold(models, classes, test_data_size=5000, density=10):
     test_loader = DataLoader(test_data, batch_size=1000, shuffle=True, generator=generator)
     thresholds = [0] * (density + 1)
 
-    counter = 0
     for i, test_images in enumerate(test_loader):
         test_images = test_images.reshape(-1, N_DIMENSIONS, 1)
         test_images = test_images.to(torch.int64)
@@ -172,21 +155,12 @@ def threshold(models, classes, test_data_size=5000, density=10):
         probs = F.softmax(probs, dim=1)
 
         for prob in probs:
-            try:
-                max_prob = torch.max(prob)
-                max_prob = int(max_prob * density)
-                thresholds[max_prob] += 1
-                counter += 1
-                if counter == test_data_size:
-                    break
-            except ValueError:
-                pass
-        if counter == test_data_size:
-            break
+            max_prob = torch.max(prob)
+            max_prob = int(max_prob * density)
+            thresholds[max_prob] += 1
 
     for threshold in thresholds:
         print('{:.2f}'.format(threshold / test_data_size), end=', ')
-
 
 
 def parse():

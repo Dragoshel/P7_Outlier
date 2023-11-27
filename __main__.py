@@ -2,19 +2,12 @@ import argparse
 import random
 
 import torch
-import torch.nn.functional as F
-from cnn.create_cnn import create_cnn
-from cnn.test import test_model
-from dataloaders.test_loader import testing_data_loader
-from dataloaders.train_loader import training_data_loaders
-from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import MNIST, FashionMNIST
-from torchvision.transforms import transforms
 from utils.classes import pick_classes, get_normal_classes, get_novel_classes
+from bayes.bayes import bayes
 
 from hmm import grid_hmm
 from cnn import make_cnn
-import numpy
 
 random.seed(10)
 torch.manual_seed(10)
@@ -43,8 +36,10 @@ def parse():
     parser_hmm.add_argument('--train-digit', action='store_true', help='Digit to train model on.')
     parser_hmm.add_argument('--train-all', action='store_true', help='Whether to train models for all digits.')
     parser_hmm.add_argument('--num-classes', type=int, help='the number of output classes', default=10)
-
     parser_hmm.add_argument('--threshold', action='store_true', help='Find the HMM treshold.')
+
+    parser_bayes = subparsers.add_parser('bayes', help='Run commands on a hidden markov model.')
+    parser_bayes.add_argument('--test', action='store_true', help='Find the HMM treshold.')
 
     return parser.parse_args()
 
@@ -71,9 +66,6 @@ def main():
 
     elif args.model == 'hmm':
         models = []
-        for digit in normal_classes:
-            model = torch.load(f'models/model{digit}.pth')
-            models.append(model)
 
         if args.train_all:
             for digit in normal_classes:
@@ -83,12 +75,21 @@ def main():
             grid_hmm.train_model(args.train_digit)
 
         elif args.test:
+            for digit in normal_classes:
+                model = torch.load(f'models/model{digit}.pth')
+                models.append(model)
             grid_hmm.test(models)
 
         elif args.threshold:
+            for digit in normal_classes:
+                model = torch.load(f'models/model{digit}.pth')
+                models.append(model)
             # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
-            # grid_hmm.threshold(models, novelty_classes, density=10)
-            grid_hmm.threshold(models, normal_classes, density=10)
+            grid_hmm.threshold(models, novelty_classes, density=10)
+            # grid_hmm.threshold(models, normal_classes, density=10)
+
+    elif args.model == 'bayes':
+        bayes(normal_classes, novelty_classes)
 
 if __name__ == "__main__":
     main()

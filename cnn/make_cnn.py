@@ -5,24 +5,24 @@ import random
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split
-from torchvision.datasets import MNIST, FashionMNIST
+from torchvision.datasets import MNIST
+from torchvision.transforms import ToTensor
 
 from cnn.create_cnn import create_cnn
 from cnn.test import test_model
 from dataloaders.test_loader import testing_data_loader
 from dataloaders.train_loader import training_data_loaders
-from utils.classes import get_normal_classes, pick_classes
-from utils.normalizer import get_transform
-from torch.utils.data import Subset, DataLoader
+from utils.classes import pick_classes
+from torch.utils.data import Subset
 
 # Counteract non-determinism
 random.seed(10)
 torch.manual_seed(10)
 
 # Pick normal, abnormal and novelty class labels
-no_norms = 8
-pct_outliers = 0.2
-no_outliers = int(50000 / (1-pct_outliers) * pct_outliers)
+NO_NORMS = 5
+PCT_OUTLIERS = 0.2
+NO_OUTLIERS = int(50000 / (1-PCT_OUTLIERS) * PCT_OUTLIERS)
 
 # Set train and size and run throughs
 batch_size = 64
@@ -35,13 +35,13 @@ def train():
     print('[INFO] Creating train and validation sets')
     training_loader, validation_loader = training_data_loaders(batch_size, data_path)
     
-    cnn_model = create_cnn(num_epochs, training_loader, validation_loader, no_norms)
+    cnn_model = create_cnn(num_epochs, training_loader, validation_loader, NO_NORMS)
     print('[INFO] Finished training, saving model...')
     torch.save(cnn_model, model_path)
 
 def test():
     cnn_model = torch.load(model_path)
-    test_loader, labels = testing_data_loader(1, data_path, no_outliers)
+    test_loader, labels = testing_data_loader(1, data_path, NO_OUTLIERS)
     test_model(test_loader, cnn_model, labels)
 
 def threshold(classes, test_data_size=5000, density=10):
@@ -49,7 +49,7 @@ def threshold(classes, test_data_size=5000, density=10):
     generator.manual_seed(10)
 
     # test_data = FashionMNIST(root='data', train=True, download=True, transform=get_transform())
-    test_data = MNIST(root='data', train=True, download=True, transform=get_transform())
+    test_data = MNIST(root='data', train=True, download=True, transform=ToTensor())
     test_data = Subset(test_data, [i for i, target in enumerate(test_data.targets) if target in classes])
 
     (test_data, _) = random_split(test_data,
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     args = parse()
 
     print('[INFO] Picking classes')
-    pick_classes(no_norms)
+    pick_classes(NO_NORMS)
 
     if not os.path.exists(model_path) and args.make:
         print('[INFO] Training model')
