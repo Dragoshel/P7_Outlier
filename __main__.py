@@ -49,8 +49,8 @@ def main():
 
     print('[INFO] Picking normal classes...')
     pick_classes(NO_NORMS)
-    normal_classes = sorted(get_normal_classes())
-    novelty_classes = sorted(get_novel_classes())
+    normal_classes = get_normal_classes()
+    novelty_classes = get_novel_classes()
 
     if args.model == 'cnn':
         if args.train:
@@ -75,15 +75,17 @@ def main():
             grid_hmm.train_model(args.train_digit)
 
         elif args.test:
-            for digit in normal_classes:
+            for digit in sorted(normal_classes):
                 model = torch.load(f'models/model{digit}.pth')
                 models.append(model)
+
             grid_hmm.test(models)
 
         elif args.threshold:
-            for digit in normal_classes:
+            for digit in sorted(normal_classes):
                 model = torch.load(f'models/model{digit}.pth')
                 models.append(model)
+
             # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
             grid_hmm.threshold(models, novelty_classes, density=10)
             # grid_hmm.threshold(models, normal_classes, density=10)

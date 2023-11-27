@@ -9,7 +9,7 @@ from tqdm import tqdm
 from dataloaders.test_loader import testing_data_loader
 from hmm.grid_hmm import reform_images
 
-BATCH_SIZE = 10
+BATCH_SIZE = 1000
 PCT_OUTLIERS = 0.1
 NO_OUTLIERS = int(50000 / (1-PCT_OUTLIERS) * PCT_OUTLIERS)
 
@@ -20,6 +20,7 @@ MODEL_PATH = 'models'
 DATA_PATH = 'data'
 
 def cnn_prob(model, images):
+    images = images.to(torch.float32)
     probs = model(images)
     probs = torch.exp(probs)
     return probs
@@ -36,11 +37,6 @@ def hmm_prob(models, images):
     probs = F.softmax(probs, dim=1)
 
     return probs
-# CNN 96%
-
-# 0.53 0.81
-# 0.61 0.76
-# 0.
 
 def bayes(normal_classes, novelty_classes, cnn_threshold=0.672 , hmm_threshold=0.285):
     test_loader, test_labels = testing_data_loader(BATCH_SIZE, DATA_PATH, NO_OUTLIERS)
@@ -58,16 +54,14 @@ def bayes(normal_classes, novelty_classes, cnn_threshold=0.672 , hmm_threshold=0
     target_names = ['Normal', 'Novelty', 'Outlier']
     loader = tqdm(test_loader, 'Processing Data')
     for images, labels in loader:
-        cnn_probabilities = cnn_prob(cnn_model, images)
-        hmm_probabilities = hmm_prob(hmm_models, images)
-
+        cnn_probabilities = cnn_prob(cnn_model, images) * 0.7
+        hmm_probabilities = hmm_prob(hmm_models, images) * 0.3
 
         for i in range(len(labels)):
             label = labels[i]
 
             cnn_probability = cnn_probabilities[i]
             hmm_probability = hmm_probabilities[i]
-
 
             cnn_max_probability = torch.max(cnn_probability)
             hmm_max_probability = torch.max(hmm_probability)
@@ -77,8 +71,6 @@ def bayes(normal_classes, novelty_classes, cnn_threshold=0.672 , hmm_threshold=0
                 y_true.append(0)
             elif original_label in novelty_classes:
                 y_true.append(1)
-                print(f'CNN: {cnn_probability}')
-                print(f'HMM: {hmm_probability}')
             else:
                 y_true.append(2)
 

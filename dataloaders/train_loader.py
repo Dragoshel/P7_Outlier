@@ -1,7 +1,7 @@
 import torch
 import torchvision
 
-from torchvision.transforms import ToTensor
+from torchvision.transforms import ToTensor, PILToTensor
 from torch.utils.data import Subset, DataLoader
 from utils.classes import get_normal_classes
 
@@ -22,8 +22,8 @@ def training_data_loaders(batch_size: int, data_path: str) -> tuple:
         tuple: Training and validation dataloader
     """
     
-    training_set = torchvision.datasets.MNIST(data_path + '/training', train=True, transform=ToTensor(), download=True)
-    validation_set = torchvision.datasets.MNIST(data_path + '/validation', train=False, transform=ToTensor(), download=True)
+    training_set = torchvision.datasets.MNIST(data_path + '/training', train=True, transform=PILToTensor(), download=True)
+    validation_set = torchvision.datasets.MNIST(data_path + '/validation', train=False, transform=PILToTensor(), download=True)
     labels = get_normal_classes()
     training_set = Subset(training_set, [i for i, target in enumerate(training_set.targets) if target in labels])
     validation_set = Subset(validation_set, [i for i, target in enumerate(validation_set.targets) if target in labels])

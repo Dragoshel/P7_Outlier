@@ -26,10 +26,9 @@ def test_model(test_loader: torch.utils.data.DataLoader, model: CNN, labels: lis
         normal_classes = get_normal_classes()
         novel_labels = get_novel_classes()
         for image, label in test_loader:  
+            image = image.to(torch.float32)
             orig_label = [labels[label]] if label < len(labels) else label.tolist()
             label = torch.tensor(index_labels(orig_label))
-            image = image
-            label = label
             probabilities = model(image)
             readable_probs = torch.exp(probabilities.cpu())
             certainty, prediction = torch.max(readable_probs, 1)

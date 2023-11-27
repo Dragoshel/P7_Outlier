@@ -55,11 +55,10 @@ def _training_pass(training_loader: torch.utils.data.DataLoader, model: CNN, opt
         float: Loss of the given training pass
     """
     for i, (images, labels) in enumerate(training_loader):
+        images = images.to(torch.float32)
         if i == 0:
             show_images(images, True)
         labels = torch.tensor(index_labels(labels.tolist()))
-        images = images
-        labels = labels
         outputs = model(images)
         loss = criterion(outputs, labels)
         
@@ -80,11 +79,10 @@ def _validation_pass(validation_loader: torch.utils.data.DataLoader, model: CNN,
         float: Loss of the given validation pass
     """    
     for i, (images, labels) in enumerate(validation_loader):
+        images = images.to(torch.float32)
         if i == 0:
             show_images(images, True)
         labels = torch.tensor(index_labels(labels.tolist()))
-        images = images
-        labels = labels
         outputs = model(images)
         validity = criterion(outputs, labels)
     
