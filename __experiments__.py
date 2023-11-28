@@ -5,7 +5,7 @@ import torch
 from cnn.exp_cnn import CNN_model
 from hmm.exp_hmm import HMM_Models
 from utils.classes import pick_classes, get_normal_classes, get_novel_classes
-from bayes.bayes import bayes
+#from bayes.bayes import bayes
 
 # HMM experiment options
 conf_dists_obs = [[10, 10], [10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
@@ -16,11 +16,15 @@ dists = 20
 obs = 40
 grid = 7
 fit = 3000
-accuracy = "38"
+hmm_accuracy = "41"
 
 # CNN experiment options
 batch_sizes = [32, 64, 128]
 epochs = [20]
+# Confs for testing CNN
+cnn_batch = 64
+cnn_epoch = 10
+cnn_accuracy = "0_24"
 
 def parse():
     parser = argparse.ArgumentParser(
@@ -33,6 +37,7 @@ def parse():
 
     parser_cnn = subparsers.add_parser('cnn', help='Run commands on a convolutional neural network.')
     parser_cnn.add_argument('--hyper-test', action='store_true', help='Test the hyperparameters for the CNN model.')
+    parser_cnn.add_argument('--test', action='store_true', help='Test a certain configuration of CNN')
 
     parser_hmm = subparsers.add_parser('hmm', help='Run commands on a hidden markov model.')
     parser_hmm.add_argument('--distributions', action='store_true', help='Train models with different distributions')
@@ -62,7 +67,13 @@ def main():
                     torch.manual_seed(10)
                     print(f'[INFO] Initialising CNN with {batch} and {epoch}...')
                     CNN_model(get_normal_classes(), batch, epoch, 'cnns')
-
+        else:
+            random.seed(10)
+            torch.manual_seed(10)
+            pick_classes(10)
+            cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
+            cnn_model.test()
+            
     elif args.model == 'hmm':
         if args.distributions:
             print("[INFO] Starting distribution tests")
@@ -70,32 +81,32 @@ def main():
                 random.seed(10)
                 torch.manual_seed(10)
                 hmm_models = HMM_Models(3000, dists_obs[0], dists_obs[1], 7)
-                print(f"[INFO] Finished running models with {dists_obs[0]} and {dists_obs[1]}, got accuracy of {hmm_models.accuracy}")
+                print(f"[INFO] Finished running models with {dists_obs[0]} and {dists_obs[1]}, got hmm_accuracy of {hmm_models.hmm_accuracy}")
         elif args.grid_size:
             print("[INFO] Starting grid_size tests")
             for size in grid_sizes:
                 random.seed(10)
                 torch.manual_seed(10)
                 hmm_models = HMM_Models(3000, 10, 10, size)
-                print(f"[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
+                print(f"[INFO] Finished running models with {size}, got hmm_accuracy of {hmm_models.hmm_accuracy}")
         elif args.fit_size:
             print("[INFO] Starting fit_size tests")
             for size in fit_size:
                 random.seed(10)
                 torch.manual_seed(10)
                 hmm_models = HMM_Models(size, 10, 10, 7)
-                print(f"[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
+                print(f"[INFO] Finished running models with {size}, got hmm_accuracy of {hmm_models.hmm_accuracy}")
         else:
             random.seed(10)
             torch.manual_seed(10)
             print(f"[INFO] Running models with dists: {dists}, obs: {10}, grid: {grid} and fit: {fit}")
-            hmm_models = HMM_Models(fit, dists, obs, grid, accuracy)
+            hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
             hmm_models.all_class_test()
             
     elif args.threshold:
-        pick_classes(5)
         random.seed(10)
         torch.manual_seed(10)
+        pick_classes(5)
         pass
         # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
         # grid_hmm.threshold(_, novelty_classes, density=10)
@@ -108,7 +119,7 @@ def main():
         pick_classes(5)
         random.seed(10)
         torch.manual_seed(10)
-        bayes(normal_classes, novelty_classes)
+        #bayes(normal_classes, novelty_classes)
 
 if __name__ == "__main__":
     main()
