@@ -67,7 +67,7 @@ class CNN_model():
     generator = torch.Generator()
     generator.manual_seed(10)
     
-    def __init__(self, classes, batch_size, no_epoch, model_folder, accuracy=0):
+    def __init__(self, classes, batch_size, no_epoch, model_folder, accuracy="0"):
         self.model_path = f'{model_folder}/cnn_model_{len(classes)}_{batch_size}_{no_epoch}_{accuracy}.pth'
         self.batch_size = batch_size
         self.epochs = no_epoch
@@ -134,10 +134,11 @@ class CNN_model():
             total += len(labels)
         
         print(f"[INFO] Finished testing of the model")
-        self.accuracy = round(correct/total * 100)
+        old_accuracy = self.accuracy
+        self.accuracy = str(round(correct/total * 100))
         print(f"[INFO] Accuracy score: {self.accuracy}%")
-        if not os.path.exists(self.model_path.replace('0', self.accuracy)):
-            os.rename(self.model_path, self.model_path.replace('0', self.accuracy))
+        if not os.path.exists(self.model_path):
+            os.rename(self.model_path, self.model_path.replace(old_accuracy, self.accuracy))
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         if type == DataType.NORMAL or type == DataType.NOVEL:

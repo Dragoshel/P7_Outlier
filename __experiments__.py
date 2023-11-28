@@ -16,11 +16,11 @@ dists = 50
 obs = 50
 grid = 4
 fit = 1000
-accuracy = ""
+accuracy = "0"
 
 # CNN experiment options
 batch_sizes = [32, 64, 128]
-epochs = [10, 20]
+epochs = [20]
 
 def parse():
     parser = argparse.ArgumentParser(
@@ -46,7 +46,6 @@ def parse():
     parser_bayes.add_argument('--test', action='store_true', help='Test the model.')
 
     return parser.parse_args()
-
 
 def main():
     args = parse()

@@ -156,12 +156,14 @@ class HMM_Models:
             preds = torch.tensor([prob.argmax() for prob in probs])
             correct += (preds == test_labels).sum().item()
             total += len(test_labels)
+            print(correct)
         
         print(f"[INFO] Finished testing of the models")
+        old_accuracy = self.accuracy
         self.accuracy = round(correct/total * 100)
         print(f"[INFO] Accuracy score: {self.accuracy}%")
-        if not os.path.exists(f'{self.model_folder}{self.accuracy}'):
-            os.rename(self.model_folder, f"{self.model_folder}{self.accuracy}")
+        if not os.path.exists(self.model_folder):
+            os.rename(self.model_folder, self.model_folder.replace(old_accuracy, self.accuracy))
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         if type == DataType.NORMAL or type == DataType.NOVEL:
