@@ -7,7 +7,6 @@ from torch.utils.data import random_split, DataLoader, Subset
 
 import torch.nn.functional as F
 
-import argparse
 import torch
 import numpy
 import random
@@ -26,16 +25,19 @@ class HMM:
     generator = torch.Generator()
     generator.manual_seed(10)
     
-    def __init__(self, model_folder, pixel_per_square, observations, distributions, digit):
+    def __init__(self, model_folder, pixel_per_square, observations, distributions, digit, load_model=False):
         self.pixel_per_square = pixel_per_square
         self.observations = observations
         self.distributions = distributions
         self.digit = digit
         self.model_path = f"{model_folder}/model{digit}.pth"
         
-        distributions = self._create_distributions()
-        self.model = DenseHMM(distributions, verbose=True)
-    
+        if load_model:
+            self._load_model()
+        else:
+            distributions = self._create_distributions()
+            self.model = DenseHMM(distributions, verbose=True)
+        
     def _make_grid(self, image):
         image = torch.flatten(image)
         image = torch.reshape(image, [self.img_size,self.img_size])
@@ -100,6 +102,9 @@ class HMM:
     def save_model(self):
         torch.save(self.model, self.model_path)
         
+    def _load_model(self):
+        self.model = torch.load(self.model_path)
+        
     def get_probabilities(self, images):
         # Reshape images to match (batch_size, 784, 1) with int values
         images = images.reshape(-1, 28**2, 1)
@@ -121,7 +126,7 @@ class HMM_Models:
     generator.manual_seed(10)
 
     def __init__(self, fit_set_size, distributions, observations, pixels_per_square, accuracy=""):
-        self.model_folder = "models_{distributions}_{observations}_{fit_set_size}_{accuracy}"
+        self.model_folder = f"models_{distributions}_{observations}_{fit_set_size}_{pixels_per_square}_{accuracy}"
         if not os.path.exists(self.model_folder):
             os.makedirs(self.model_folder)
             
@@ -135,8 +140,10 @@ class HMM_Models:
             print(f"[INFO] Finished creating models")
             self.test_models()
         else:
+            print(f"[INFO] Loading model from folder ...")
             for digit in range(10):
-                hmm_for_digit = torch.load(f'{self.model_folder}/model{digit}.pth')
+                hmm_for_digit = HMM(self.model_folder, pixels_per_square, observations, distributions, digit, True)
+                self.models.append(hmm_for_digit)
         
     def test_models(self):
         print(f"[INFO] Initializing test run")
@@ -151,16 +158,16 @@ class HMM_Models:
         total = 0
         for i, (test_images, test_labels) in enumerate(test_data_loader):
             print(f"[INFO] Running batch {i} of {len(test_data_loader)}")
-            probs = numpy.array([model.get_probabilities(test_images).tolist() for model in self.models])
+            probs = numpy.array([model.get_probabilities(test_images) for model in self.models])
             probs = probs.transpose()
-            preds = [prob.argmax() for prob in probs]
+            preds = torch.tensor([prob.argmax() for prob in probs])
             correct += (preds == test_labels).sum().item()
             total += len(test_labels)
         
         print(f"[INFO] Finished testing of the models")
-        self.accuracy = correct/total * 100
+        self.accuracy = round(correct/total * 100)
         print(f"[INFO] Accuracy score: {self.accuracy}%")
-        if not os.path.exists(self.model_folder):
+        if not os.path.exists(f'{self.model_folder}{self.accuracy}'):
             os.rename(self.model_folder, f"{self.model_folder}{self.accuracy}")
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
@@ -193,39 +200,3 @@ class HMM_Models:
 
         for threshold in thresholds:
             print('{:.2f}'.format(threshold / test_data_size), end=', ')
-
-
-def parse():
-    parser = argparse.ArgumentParser(
-        prog='HMM classifier',
-        description="Builds a number of HMM's and creates a probability distribution over MNIST digits",
-        epilog='Hi mom!'
-    )
-
-    parser.add_argument('-c', '--num-classes', type=int, help='the number of output classes', default=10)
-    parser.add_argument('-d', '--digit', type=int, help='digit to train model on')
-    parser.add_argument('-a', '--all', action='store_true', help='whether to train models for all digits')
-    parser.add_argument('-t', '--test', action='store_true', help='testing the entire model')
-
-    return parser.parse_args()
-
-def main():
-    args = parse()
-
-    if args.test:
-        models = []
-        for digit in range(args.num_classes):
-            model = torch.load(f'output/model{digit}.pth')
-            models.append(model)
-
-        test(models)
-        return
-
-    if args.all:
-        for digit in range(args.num_classes):
-            train_model(digit)
-    else:
-        train_model(args.digit)
-
-if __name__ == '__main__':
-    main()

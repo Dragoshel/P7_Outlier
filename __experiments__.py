@@ -17,9 +17,14 @@ generator.manual_seed(10)
 NO_NORMS = 5
 
 # HMM experiment options
-conf_dists_obs = [[10, 10], [10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
-grid_sizes = [2, 4, 7, 14]
-fit_size = [1000, 2000, 3000, 4000, 5000, 6000]
+conf_dists_obs = [[10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
+grid_sizes = [4, 14]
+fit_size = [2000, 4000, 5000, 6000]
+#Confs for testing the HMMs
+dists = 10
+obs = 10
+grid = 7
+fit = 1000
 
 def parse():
     parser = argparse.ArgumentParser(
@@ -40,6 +45,7 @@ def parse():
     parser_hmm.add_argument('--fit-size', action='store_true', help='Train models with different fit sizes')
     parser_hmm.add_argument('--grid-size', action='store_true', help='Train model with different grid sizes')
     parser_hmm.add_argument('--threshold', action='store_true', help='Find the HMM treshold.')
+    parser_hmm.add_argument('--test', action='store_true', help='Test a certain configuration of HMMs')
 
     parser_bayes = subparsers.add_parser('bayes', help='Run commands on a hidden markov model.')
     parser_bayes.add_argument('--test', action='store_true', help='Find the HMM treshold.')
@@ -72,22 +78,26 @@ def main():
             print("[INFO] Starting distribution tests")
             for dists_obs in conf_dists_obs:
                 hmm_models = HMM_Models(3000, dists_obs[0], dists_obs[1], 7)
-                print("[INFO] Finished running models with {dists_obs[0]} and {dists_obs[1]}, got accuracy of {hmm_models.accuracy}")
+                print(f"[INFO] Finished running models with {dists_obs[0]} and {dists_obs[1]}, got accuracy of {hmm_models.accuracy}")
         elif args.grid_size:
             print("[INFO] Starting grid_size tests")
             for size in grid_sizes:
                 hmm_models = HMM_Models(3000, 10, 10, size)
-                print("[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
+                print(f"[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
         elif args.fit_size:
             print("[INFO] Starting fit_size tests")
             for size in fit_size:
                 hmm_models = HMM_Models(size, 10, 10, 7)
-                print("[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
+                print(f"[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
         elif args.threshold:
             pass
             # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
             # grid_hmm.threshold(_, novelty_classes, density=10)
             # grid_hmm.threshold(models, normal_classes, density=10)
+        else:
+            print(f"[INFO] Running models with dists: {dists}, obs: {10}, grid: {grid} and fit: {fit}")
+            hmm_models = HMM_Models(fit, dists, obs, grid)
+            hmm_models.all_class_test()
 
     elif args.model == 'bayes':
         bayes(normal_classes, novelty_classes)
