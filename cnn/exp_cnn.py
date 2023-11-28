@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+import numpy
 
 import torch
 import torch.nn.functional as F
@@ -92,6 +93,12 @@ class CNN_model():
     def _load_model(self):
         return torch.load(self.model_path)
         
+    def get_probabilities(self, images):
+        images = images.to(torch.float32)
+        probs = self.model(images)
+        probs = torch.exp(probs.cpu())
+        return probs
+        
     def train(self):
         print('[INFO] Creating train and validation sets')
         full_set = Subset(self.train_data, [i for i, target in enumerate(self.train_data.targets) if target in self.normal_classes])
@@ -144,7 +151,7 @@ class CNN_model():
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         if type == DataType.NORMAL or type == DataType.NOVEL:
-            test_data = self.test_data
+            test_data = self.train_data
         else:
             test_data = self.outlier_data
         test_data = Subset(test_data, [i for i, target in enumerate(test_data.targets) if target in classes])
@@ -160,6 +167,7 @@ class CNN_model():
         thresholds = [0] * (no_thresholds + 1)
 
         for images, _ in test_loader:
+            images = images.to(torch.float32)
             pred = self.model(images)
             probs = F.softmax(pred, dim=1)
 
@@ -171,3 +179,5 @@ class CNN_model():
         print('CNN Thresholds:')
         for threshold in thresholds:
             print('{:.2f}'.format(threshold / test_data_size), end=', ')
+        print()
+        return numpy.array(thresholds) / test_data_size

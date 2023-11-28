@@ -95,6 +95,16 @@ class HMM:
 
             self.model.fit(train_images)
     
+    def retrain(self, images):
+        train_images = numpy.array(images)
+        # Reshape images to match (batch_size, 784, 1) with int values
+        train_images = images.reshape(-1, self.n_dimensions, 1)
+        train_images = train_images.to(torch.int64)
+        # Format images to grids
+        train_images = self._reform_images(train_images)
+
+        self.model.fit(train_images)
+        
     def save_model(self):
         torch.save(self.model, self.model_path)
         
@@ -142,6 +152,16 @@ class HMM_Models:
                 hmm_for_digit = HMM(self.model_folder, pixels_per_square, observations, distributions, digit, True)
                 self.models.append(hmm_for_digit)
         
+    def get_all_probabilities(self, images):
+        probs = numpy.array([model.get_probabilities(images) for model in self.models])
+        probs = probs.transpose()
+        probs = torch.tensor(probs)
+        probs = F.softmax(probs, dim=1)
+        return probs
+    
+    def models_for_classes(self, classes):
+        self.models = [model for clx, model in enumerate(self.models) if clx in classes]
+    
     def all_class_test(self):
         print(f"[INFO] Initializing test run")
         test_data_loader = DataLoader(self.test_data,
@@ -157,7 +177,6 @@ class HMM_Models:
             preds = torch.tensor([prob.argmax() for prob in probs])
             correct += (preds == test_labels).sum().item()
             total += len(test_labels)
-            print(correct)
         
         print(f"[INFO] Finished testing of the models")
         old_accuracy = self.accuracy
@@ -166,11 +185,12 @@ class HMM_Models:
         if not os.path.exists(self.model_folder.replace(old_accuracy, self.accuracy)):
             os.rename(self.model_folder, self.model_folder.replace(old_accuracy, self.accuracy))
 
-    def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
+    def threshold(self, normal_classes, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         if type == DataType.NORMAL or type == DataType.NOVEL:
-            test_data = self.test_data
+            test_data = self.train_data
         else:
             test_data = self.outlier_data
+            
         test_data = Subset(test_data, [i for i, target in enumerate(test_data.targets) if target in classes])
 
         discard = len(test_data) - test_data_size
@@ -179,19 +199,23 @@ class HMM_Models:
             generator=self.generator
         )
         
+        self.models_for_classes(normal_classes)
         test_loader = DataLoader(test_data_subset, batch_size=1000, shuffle=True, generator=self.generator)
         print('Threshold set has {} instances'.format(len(test_data_subset)))
         thresholds = [0] * (no_thresholds + 1)
 
         for test_images, _ in test_loader:
-            probs = numpy.array([model.get_probabilities(test_images).tolist() for model in self.models])
+            probs = numpy.array([model.get_probabilities(test_images) for model in self.models])
             probs = torch.tensor(probs.transpose())
             probs = F.softmax(probs, dim=1)
-
             for prob in probs:
                 max_prob = torch.max(prob)
+                if torch.isnan(max_prob):
+                    max_prob = 0
                 max_prob = int(max_prob * no_thresholds)
                 thresholds[max_prob] += 1
         print('HMM Thresholds:')
         for threshold in thresholds:
             print('{:.2f}'.format(threshold / test_data_size), end=', ')
+        print()
+        return numpy.array(thresholds) / test_data_size
