@@ -8,12 +8,8 @@ from torch.utils.data import DataLoader, random_split
 from torchvision.datasets import MNIST, FashionMNIST
 from torchvision.transforms import PILToTensor
 
-from cnn.create_cnn import create_cnn
-from cnn.test import test_model
 from cnn.train import train_model
-from dataloaders.test_loader import testing_data_loader
-from dataloaders.train_loader import training_data_loaders
-from utils.classes import index_labels, pick_classes
+from utils.classes import index_labels
 from torch.utils.data import Subset
 
 import torch.nn as nn
@@ -79,6 +75,7 @@ class CNN_model():
         self.accuracy = accuracy
         
         if not os.path.exists(self.model_path):
+            os.makedirs(model_folder)
             self.model = _CNN(classes)
             self.train()
             self._save_model()

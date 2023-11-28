@@ -7,18 +7,16 @@ from hmm.exp_hmm import HMM_Models
 from utils.classes import pick_classes, get_normal_classes, get_novel_classes
 from bayes.bayes import bayes
 
-from cnn import make_cnn
-
 # HMM experiment options
 conf_dists_obs = [[10, 10], [10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
 grid_sizes = [2, 4, 14]
 fit_size = [1000, 2000, 4000, 5000, 6000]
-#Confs for testing the HMMs
-dists = 10
-obs = 10
-grid = 7
+# Confs for testing the HMMs
+dists = 50
+obs = 50
+grid = 4
 fit = 1000
-accuracy = 32
+accuracy = ""
 
 # CNN experiment options
 batch_sizes = [32, 64, 128]
@@ -64,7 +62,7 @@ def main():
                     random.seed(10)
                     torch.manual_seed(10)
                     print(f'[INFO] Initialising CNN with {batch} and {epoch}...')
-                    CNN_model(get_normal_classes, batch, epoch, 'cnns')
+                    CNN_model(get_normal_classes(), batch, epoch, 'cnns')
 
     elif args.model == 'hmm':
         if args.distributions:
@@ -92,7 +90,7 @@ def main():
             random.seed(10)
             torch.manual_seed(10)
             print(f"[INFO] Running models with dists: {dists}, obs: {10}, grid: {grid} and fit: {fit}")
-            hmm_models = HMM_Models(fit, dists, obs, grid)
+            hmm_models = HMM_Models(fit, dists, obs, grid, accuracy)
             hmm_models.all_class_test()
             
     elif args.threshold:

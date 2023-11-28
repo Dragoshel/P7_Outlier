@@ -25,7 +25,8 @@ def train_model(epochs: int, training_loader: torch.utils.data.DataLoader, valid
     return train_loss, valid_loss
 
 def _training_pass(training_loader: torch.utils.data.DataLoader, model: CNN, optimizer, criterion) -> float:
-    for images, labels in enumerate(training_loader):
+    for i, (images, labels) in enumerate(training_loader):
+        print(f"[INFO] Running batch {i} of {len(training_loader)}")
         images = images.to(torch.float32)
         labels = torch.tensor(index_labels(labels.tolist()))
         outputs = model(images)
@@ -37,7 +38,7 @@ def _training_pass(training_loader: torch.utils.data.DataLoader, model: CNN, opt
     return loss.item()
 
 def _validation_pass(validation_loader: torch.utils.data.DataLoader, model: CNN, criterion) -> float:
-    for images, labels in enumerate(validation_loader):
+    for images, labels in validation_loader:
         images = images.to(torch.float32)
         labels = torch.tensor(index_labels(labels.tolist()))
         outputs = model(images)
