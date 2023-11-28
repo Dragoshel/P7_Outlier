@@ -9,13 +9,9 @@ import torch.nn.functional as F
 
 import torch
 import numpy
-import random
 import os
 
 from utils.data_types import DataType
-
-random.seed(10)
-torch.manual_seed(10)
 
 class HMM:
     img_size = 28
