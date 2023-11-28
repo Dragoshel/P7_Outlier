@@ -78,16 +78,16 @@ class HMM:
         train_data_subset = [img for img, label in zip(
             train_data.data, train_data.targets) if label == self.digit]
         
-        keep = int(len(train_data_subset) * fit_size)
-        discard = int(len(train_data_subset) - keep)
+        discard = int(len(train_data_subset) - fit_size)
         train_data_subset, _ = random_split(train_data_subset,
-            [keep, discard],
+            [fit_size, discard],
             generator=self.generator
         )
 
         train_data_loader = DataLoader(
             train_data_subset, shuffle=True, batch_size=len(train_data_subset), generator=self.generator)
-
+        print('Training set has {} instances'.format(len(train_data_subset)))
+        
         # Train model to fit sequences observed in a single number
         print(f"[INFO] Fitting model for digit {self.digit} ...")
         for train_images in train_data_loader:
@@ -138,18 +138,15 @@ class HMM_Models:
                 self.models.append(hmm_for_digit)
                 
             print(f"[INFO] Finished creating models")
-            self.test_models()
+            self.all_class_test()
         else:
             print(f"[INFO] Loading model from folder ...")
             for digit in range(10):
                 hmm_for_digit = HMM(self.model_folder, pixels_per_square, observations, distributions, digit, True)
                 self.models.append(hmm_for_digit)
         
-    def test_models(self):
-        print(f"[INFO] Initializing test run")
-        self.all_class_test()
-        
     def all_class_test(self):
+        print(f"[INFO] Initializing test run")
         test_data_loader = DataLoader(self.test_data,
             shuffle=True, batch_size=1000, generator=self.generator)
         
@@ -177,18 +174,17 @@ class HMM_Models:
             test_data = self.outlier_data
         test_data = Subset(test_data, [i for i, target in enumerate(test_data.targets) if target in classes])
 
-        keep = int(len(test_data) * test_data_size)
-        discard = int(len(test_data) - keep)
+        discard = len(test_data) - test_data_size
         test_data_subset, _ = random_split(test_data,
-            [keep, discard],
+            [test_data_size, discard],
             generator=self.generator
         )
         
         test_loader = DataLoader(test_data_subset, batch_size=1000, shuffle=True, generator=self.generator)
+        print('Threshold set has {} instances'.format(len(test_data_subset)))
         thresholds = [0] * (no_thresholds + 1)
 
-        for i, (test_images, _) in enumerate(test_loader):
-            print(f"[INFO] Running batch {i} of {len(test_loader)}")
+        for test_images, _ in test_loader:
             probs = numpy.array([model.get_probabilities(test_images).tolist() for model in self.models])
             probs = torch.tensor(probs.transpose())
             probs = F.softmax(probs, dim=1)
@@ -197,6 +193,6 @@ class HMM_Models:
                 max_prob = torch.max(prob)
                 max_prob = int(max_prob * no_thresholds)
                 thresholds[max_prob] += 1
-
+        print('HMM Thresholds:')
         for threshold in thresholds:
             print('{:.2f}'.format(threshold / test_data_size), end=', ')

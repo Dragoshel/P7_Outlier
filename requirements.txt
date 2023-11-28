@@ -25,4 +25,4 @@ torchaudio==2.1.0
 torchvision==0.16.0
 typing_extensions==4.4.0
 urllib3==1.26.13
-learn2learn==0.2.0
+pomegranate

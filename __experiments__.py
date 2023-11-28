@@ -17,14 +17,19 @@ generator.manual_seed(10)
 NO_NORMS = 5
 
 # HMM experiment options
-conf_dists_obs = [[10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
-grid_sizes = [4, 14]
-fit_size = [2000, 4000, 5000, 6000]
+conf_dists_obs = [[10, 10], [10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
+grid_sizes = [2, 4, 14]
+fit_size = [1000, 2000, 4000, 5000, 6000]
 #Confs for testing the HMMs
 dists = 10
 obs = 10
 grid = 7
 fit = 1000
+accuracy = 32
+
+# CNN experiment options
+batch_sizes = [32, 64, 128]
+epochs = [10, 20]
 
 def parse():
     parser = argparse.ArgumentParser(
@@ -36,19 +41,18 @@ def parse():
     subparsers = parser.add_subparsers(dest='model', help='Model type')
 
     parser_cnn = subparsers.add_parser('cnn', help='Run commands on a convolutional neural network.')
-    parser_cnn.add_argument('--test', action='store_true', help='Test the CNN model.')
-    parser_cnn.add_argument('--train', action='store_true', help='Train the CNN model.')
-    parser_cnn.add_argument('--threshold', action='store_true', help='Find the CNN treshold.')
+    parser_cnn.add_argument('--hyper-test', action='store_true', help='Test the hyperparameters for the CNN model.')
 
     parser_hmm = subparsers.add_parser('hmm', help='Run commands on a hidden markov model.')
     parser_hmm.add_argument('--distributions', action='store_true', help='Train models with different distributions')
     parser_hmm.add_argument('--fit-size', action='store_true', help='Train models with different fit sizes')
     parser_hmm.add_argument('--grid-size', action='store_true', help='Train model with different grid sizes')
-    parser_hmm.add_argument('--threshold', action='store_true', help='Find the HMM treshold.')
     parser_hmm.add_argument('--test', action='store_true', help='Test a certain configuration of HMMs')
 
-    parser_bayes = subparsers.add_parser('bayes', help='Run commands on a hidden markov model.')
-    parser_bayes.add_argument('--test', action='store_true', help='Find the HMM treshold.')
+    parser.add_argument('--threshold', action='store_true', help='Find the tresholds')
+    
+    parser_bayes = subparsers.add_parser('bayes', help='Run commands on bayes model.')
+    parser_bayes.add_argument('--test', action='store_true', help='Test the model.')
 
     return parser.parse_args()
 
@@ -62,16 +66,14 @@ def main():
     novelty_classes = get_novel_classes()
 
     if args.model == 'cnn':
-        if args.train:
-            print('[INFO] Training CNN...')
-            make_cnn.train()
+        if args.hyper_test:
+            for batch in batch_sizes:
+                for epoch in epochs:
+                    print(f'[INFO] Initialising CNN with {batch} and {epoch}...')
+                    make_cnn.train()
         elif args.test:
             print('[INFO] Testing CNN...')
             make_cnn.test()
-        elif args.threshold:
-            # make_cnn.threshold([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
-            make_cnn.threshold(normal_classes, density=10)
-            # make_cnn.threshold(novelty_classes, density=10)
 
     elif args.model == 'hmm':
         if args.distributions:
@@ -89,15 +91,19 @@ def main():
             for size in fit_size:
                 hmm_models = HMM_Models(size, 10, 10, 7)
                 print(f"[INFO] Finished running models with {size}, got accuracy of {hmm_models.accuracy}")
-        elif args.threshold:
-            pass
-            # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
-            # grid_hmm.threshold(_, novelty_classes, density=10)
-            # grid_hmm.threshold(models, normal_classes, density=10)
         else:
             print(f"[INFO] Running models with dists: {dists}, obs: {10}, grid: {grid} and fit: {fit}")
             hmm_models = HMM_Models(fit, dists, obs, grid)
             hmm_models.all_class_test()
+            
+    elif args.threshold:
+        pass
+        # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
+        # grid_hmm.threshold(_, novelty_classes, density=10)
+        # grid_hmm.threshold(models, normal_classes, density=10)
+        # make_cnn.threshold([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
+        # make_cnn.threshold(normal_classes, density=10)
+        # make_cnn.threshold(novelty_classes, density=10)
 
     elif args.model == 'bayes':
         bayes(normal_classes, novelty_classes)
