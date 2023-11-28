@@ -139,8 +139,8 @@ class CNN_model():
         old_accuracy = self.accuracy
         self.accuracy = str(round(correct/total * 100))
         print(f"[INFO] Accuracy score: {self.accuracy}%")
-        if not os.path.exists(self.model_path):
-            os.rename(self.model_path, self.model_path.replace(old_accuracy, self.accuracy))
+        if not os.path.exists(self.model_folder.replace(old_accuracy, self.accuracy)):
+            os.rename(self.model_folder, self.model_folder.replace(old_accuracy, self.accuracy))
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         if type == DataType.NORMAL or type == DataType.NOVEL:

@@ -12,11 +12,11 @@ conf_dists_obs = [[10, 10], [10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [
 grid_sizes = [2, 4, 14]
 fit_size = [1000, 2000, 4000, 5000, 6000]
 # Confs for testing the HMMs
-dists = 50
-obs = 50
+dists = 10
+obs = 10
 grid = 4
-fit = 1000
-accuracy = "0"
+fit = 3000
+accuracy = "41"
 
 # CNN experiment options
 batch_sizes = [32, 64, 128]

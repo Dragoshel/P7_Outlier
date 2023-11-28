@@ -116,13 +116,14 @@ class HMM_Models:
     test_data = MNIST(root='data/hmm/testing', train=False, download=True, transform=PILToTensor())
     outlier_data = FashionMNIST(root='data/hmm/outlier', train=True, download=True, transform=PILToTensor())
     models = []
-    accuracy = 0
+    accuracy = "0"
     
     generator = torch.Generator()
     generator.manual_seed(10)
 
     def __init__(self, fit_set_size, distributions, observations, pixels_per_square, accuracy=""):
         self.model_folder = f"models_{distributions}_{observations}_{fit_set_size}_{pixels_per_square}_{accuracy}"
+        self.accuracy = accuracy
         if not os.path.exists(self.model_folder):
             os.makedirs(self.model_folder)
             
@@ -160,9 +161,9 @@ class HMM_Models:
         
         print(f"[INFO] Finished testing of the models")
         old_accuracy = self.accuracy
-        self.accuracy = round(correct/total * 100)
+        self.accuracy = str(round(correct/total * 100))
         print(f"[INFO] Accuracy score: {self.accuracy}%")
-        if not os.path.exists(self.model_folder):
+        if not os.path.exists(self.model_folder.replace(old_accuracy, self.accuracy)):
             os.rename(self.model_folder, self.model_folder.replace(old_accuracy, self.accuracy))
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
