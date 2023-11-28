@@ -2,6 +2,7 @@ import argparse
 import random
 
 import torch
+from cnn.exp_cnn import CNN_model
 from hmm.exp_hmm import HMM_Models
 from utils.classes import pick_classes, get_normal_classes, get_novel_classes
 from bayes.bayes import bayes
@@ -12,9 +13,6 @@ random.seed(10)
 torch.manual_seed(10)
 generator = torch.Generator()
 generator.manual_seed(10)
-
-# Pick normal, abnormal and novelty class labels
-NO_NORMS = 5
 
 # HMM experiment options
 conf_dists_obs = [[10, 10], [10, 20], [20, 20], [20, 40], [50, 50], [50, 100], [100, 100]]
@@ -60,20 +58,16 @@ def parse():
 def main():
     args = parse()
 
-    print('[INFO] Picking normal classes...')
-    pick_classes(NO_NORMS)
     normal_classes = get_normal_classes()
     novelty_classes = get_novel_classes()
 
     if args.model == 'cnn':
         if args.hyper_test:
+            pick_classes(10)
             for batch in batch_sizes:
                 for epoch in epochs:
                     print(f'[INFO] Initialising CNN with {batch} and {epoch}...')
-                    make_cnn.train()
-        elif args.test:
-            print('[INFO] Testing CNN...')
-            make_cnn.test()
+                    CNN_model(get_normal_classes, batch, epoch, 'cnns')
 
     elif args.model == 'hmm':
         if args.distributions:
@@ -97,6 +91,7 @@ def main():
             hmm_models.all_class_test()
             
     elif args.threshold:
+        pick_classes(5)
         pass
         # grid_hmm.threshold(models, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], density=10)
         # grid_hmm.threshold(_, novelty_classes, density=10)
@@ -106,6 +101,7 @@ def main():
         # make_cnn.threshold(novelty_classes, density=10)
 
     elif args.model == 'bayes':
+        pick_classes(5)
         bayes(normal_classes, novelty_classes)
 
 if __name__ == "__main__":
