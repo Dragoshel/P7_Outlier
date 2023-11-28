@@ -74,8 +74,10 @@ class CNN_model():
         self.normal_classes = classes
         self.accuracy = accuracy
         
-        if not os.path.exists(self.model_path):
+        if not os.path.exists(model_folder):
             os.makedirs(model_folder)
+        
+        if not os.path.exists(self.model_path):
             self.model = _CNN(classes)
             self.train()
             self._save_model()
