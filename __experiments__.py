@@ -34,32 +34,38 @@ experiments = {
     "more_normal": {
         DataType.NORMAL: 7,
         DataType.NOVEL: 3,
-        DataType.OUTLIER: 0.02
+        DataType.OUTLIER: 0.02,
+        "cnn": "98_45"
     },
     "more_novel": {
         DataType.NORMAL: 3,
         DataType.NOVEL: 7,
-        DataType.OUTLIER: 0.02
+        DataType.OUTLIER: 0.02,
+        "cnn": "99_15"
     },
     "same_amount": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
-        DataType.OUTLIER: 0.02
+        DataType.OUTLIER: 0.02,
+        "cnn": "98_95"
     },
     "less_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
-        DataType.OUTLIER: 0.30
+        DataType.OUTLIER: 0.30,
+        "cnn": "98_95"
     },
     "more_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
-        DataType.OUTLIER: 1.30
+        DataType.OUTLIER: 1.30,
+        "cnn": "98_95"
     },
     "same_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
-        DataType.OUTLIER: 1.00
+        DataType.OUTLIER: 1.00,
+        "cnn": "98_95"
     }
 }
 
@@ -182,12 +188,13 @@ def main():
             pick_classes(setup[DataType.NORMAL])
             print(f"Normal classes: {get_normal_classes()}")
             print(f"Novel classes: {get_novel_classes()}")
-            cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
+            cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', setup["cnn"])
             hmms = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
             hmms.models_for_classes(get_normal_classes)
             
             bayes = Bayes(get_normal_classes(), get_novel_classes(), setup[DataType.OUTLIER], cnn, hmms)
-            bayes.run()        
+            bayes.run()
+            bayes.save_accuracy(experiment)
 
 if __name__ == "__main__":
     main()
