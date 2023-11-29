@@ -126,7 +126,8 @@ class CNN_model():
         
     def test(self):
         print(f"[INFO] Initializing test run")
-        test_data_loader = DataLoader(self.test_data,
+        test_data_subset = Subset(self.test_data, [i for i, target in enumerate(self.test_data.targets) if target in self.normal_classes])
+        test_data_loader = DataLoader(test_data_subset,
             shuffle=True, batch_size=1000, generator=self.generator)
         
         print(f"[INFO] Testing model with {len(self.test_data)} datapoints ...")

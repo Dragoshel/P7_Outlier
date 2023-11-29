@@ -17,15 +17,16 @@ fit_size = [1000, 2000, 4000, 5000, 6000]
 dists = 50
 obs = 50
 grid = 4
-fit = 1000
+fit = 3000
 hmm_accuracy = "acc"
 
 # CNN experiment options
 batch_sizes = [128]
 epochs = [10]
 # Confs for testing CNN
-cnn_batch = 32
-cnn_epoch = 10
+cnn_batch = 128
+cnn_epoch = 20
+cnn_classes = 5
 cnn_accuracy = "acc"
 
 # Bayes experiments
@@ -104,7 +105,7 @@ def main():
         else:
             random.seed(10)
             torch.manual_seed(10)
-            pick_classes(10)
+            pick_classes(cnn_classes)
             cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
             cnn_model.test()
             
