@@ -89,6 +89,7 @@ def parse():
     return parser.parse_args()
 
 def main():
+    global hmm_accuracy, cnn_accuracy
     args = parse()
 
     if args.model == 'cnn':
@@ -142,17 +143,23 @@ def main():
         pick_classes(5)
         # Normal accuracy
         hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
+        hmm_accuracy = hmm_models.accuracy
         cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
+        cnn_accuracy = cnn_model.accuracy
         normal_hmm = hmm_models.threshold(get_normal_classes(), DataType.NORMAL, get_normal_classes())
         normal_cnn = cnn_model.threshold(DataType.NORMAL, get_normal_classes())
         print()
+        random.seed(10)
+        torch.manual_seed(10)
         # Novel accuracy
         hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
         cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
         novel_hmm = hmm_models.threshold(get_normal_classes(), DataType.NOVEL, get_novel_classes())
         novel_cnn = cnn_model.threshold(DataType.NOVEL, get_novel_classes())
         print()
-        # Normal accuracy
+        random.seed(10)
+        torch.manual_seed(10)
+        # Outlier accuracy
         hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
         cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
         outlier_hmm = hmm_models.threshold(get_normal_classes(), DataType.OUTLIER)
