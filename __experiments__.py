@@ -18,7 +18,7 @@ dists = 50
 obs = 50
 grid = 4
 fit = 3000
-hmm_accuracy = "acc"
+hmm_accuracy = "49"
 
 # CNN experiment options
 batch_sizes = [128]
@@ -27,45 +27,46 @@ epochs = [10]
 cnn_batch = 128
 cnn_epoch = 20
 cnn_classes = 5
-cnn_accuracy = "acc"
+cnn_accuracy = "98_95"
 
 # Bayes experiments
+seeds = [10, 20, 30, 40, 50]
 experiments = {
     "more_normal": {
         DataType.NORMAL: 7,
         DataType.NOVEL: 3,
         DataType.OUTLIER: 0.02,
-        "cnn": "98_45"
+        "cnn": ["98_31", "acc", "acc", "acc", "acc"]
     },
     "more_novel": {
         DataType.NORMAL: 3,
         DataType.NOVEL: 7,
         DataType.OUTLIER: 0.02,
-        "cnn": "99_15"
+        "cnn": ["99_25", "acc", "acc", "acc", "acc"]
     },
     "same_amount": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
         DataType.OUTLIER: 0.02,
-        "cnn": "98_95"
+        "cnn": ["98_76", "acc", "acc", "acc", "acc"]
     },
     "less_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
         DataType.OUTLIER: 0.30,
-        "cnn": "98_95"
+        "cnn": ["98_76", "acc", "acc", "acc", "acc"]
     },
     "more_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
         DataType.OUTLIER: 1.30,
-        "cnn": "98_95"
+        "cnn": ["98_76", "acc", "acc", "acc", "acc"]
     },
     "same_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,
         DataType.OUTLIER: 1.00,
-        "cnn": "98_95"
+        "cnn": ["98_76", "acc", "acc", "acc", "acc"]
     }
 }
 
@@ -148,53 +149,53 @@ def main():
         random.seed(10)
         torch.manual_seed(10)
         pick_classes(5)
+        hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
+        hmm_models.models_for_classes(get_normal_classes())
+        cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
+        bayes = Bayes(get_normal_classes(), get_novel_classes(), 0, cnn_model, hmm_models)
+        
         # Normal accuracy
-        hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
-        hmm_accuracy = hmm_models.accuracy
-        cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
-        cnn_accuracy = cnn_model.accuracy
-        normal_hmm = hmm_models.threshold(get_normal_classes(), DataType.NORMAL, get_normal_classes())
-        normal_cnn = cnn_model.threshold(DataType.NORMAL, get_normal_classes())
-        print()
         random.seed(10)
         torch.manual_seed(10)
+        print("Normal")
+        bayes.threshold(DataType.NORMAL, get_normal_classes())
+        print()
+        
         # Novel accuracy
-        hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
-        cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
-        novel_hmm = hmm_models.threshold(get_normal_classes(), DataType.NOVEL, get_novel_classes())
-        novel_cnn = cnn_model.threshold(DataType.NOVEL, get_novel_classes())
-        print()
         random.seed(10)
         torch.manual_seed(10)
-        # Outlier accuracy
-        hmm_models = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
-        cnn_model = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', cnn_accuracy)
-        outlier_hmm = hmm_models.threshold(get_normal_classes(), DataType.OUTLIER)
-        outlier_cnn = cnn_model.threshold(DataType.OUTLIER)
+        print("Novel")
+        bayes.threshold(DataType.NOVEL, get_novel_classes())
         print()
-        print(f"Normal classes: {get_normal_classes()}")
-        print(f"HMM normal: {numpy.around(normal_hmm, 2)}")
-        print(f"CNN normal: {numpy.around(normal_cnn, 2)}")
-        print(f"HMM novel: {numpy.around(novel_hmm, 2)}")
-        print(f"CNN novel: {numpy.around(novel_cnn, 2)}")
-        print(f"HMM outlier: {numpy.around(outlier_hmm, 2)}")
-        print(f"CNN outlier: {numpy.around(outlier_cnn, 2)}")
+        
+        # Outlier accuracy
+        random.seed(10)
+        torch.manual_seed(10)
+        print("Outlier")
+        bayes.threshold(DataType.OUTLIER)
 
     elif args.model == 'bayes':
-        for experiment, setup in experiments.items():
-            print(experiment)
-            random.seed(10)
-            torch.manual_seed(10)
-            pick_classes(setup[DataType.NORMAL])
-            print(f"Normal classes: {get_normal_classes()}")
-            print(f"Novel classes: {get_novel_classes()}")
-            cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', setup["cnn"])
-            hmms = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
-            hmms.models_for_classes(get_normal_classes)
-            
-            bayes = Bayes(get_normal_classes(), get_novel_classes(), setup[DataType.OUTLIER], cnn, hmms)
-            bayes.run()
-            bayes.save_accuracy(experiment)
-
+        buffer_times = []
+        for i, seed in enumerate(seeds):
+            for experiment, setup in experiments.items():
+                print(experiment)
+                random.seed(seed)
+                torch.manual_seed(10)
+                pick_classes(setup[DataType.NORMAL])
+                cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', setup["cnn"][i])
+                if setup[DataType.NORMAL] == 5:
+                    experiments["less_outliers"]["cnn"][i] = cnn.accuracy
+                    experiments["more_outliers"]["cnn"][i] = cnn.accuracy
+                    experiments["same_outliers"]["cnn"][i] = cnn.accuracy
+                    
+                hmms = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
+                hmms.models_for_classes(get_normal_classes())
+                
+                bayes = Bayes(get_normal_classes(), get_novel_classes(), setup[DataType.OUTLIER], cnn, hmms)
+                bayes.run(True)
+                bayes.save_accuracy(experiment, f"{seed}")
+                buffer_times.append(bayes.buffer_batches)
+            print(buffer_times)
+                
 if __name__ == "__main__":
     main()

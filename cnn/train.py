@@ -20,13 +20,13 @@ def train_model(epochs: int, training_loader: torch.utils.data.DataLoader, valid
         laptime = round((time.time() - lasttime), 2)
         totaltime = round((time.time() - starttime), 2)
         lasttime = time.time()
-        print('Epoch [{}/{}], Loss: {:.4f}, Validity: {:.4}, Lap time: {}, Total time: {}'.format(epoch+1, epochs, loss, validity, laptime, totaltime))
+        #print('Epoch [{}/{}], Loss: {:.4f}, Validity: {:.4}, Lap time: {}, Total time: {}'.format(epoch+1, epochs, loss, validity, laptime, totaltime))
     
     return train_loss, valid_loss
 
 def _training_pass(training_loader: torch.utils.data.DataLoader, model: CNN, optimizer, criterion) -> float:
     for i, (images, labels) in enumerate(training_loader):
-        print(f"[INFO] Running batch {i} of {len(training_loader)}")
+        #print(f"[INFO] Running batch {i} of {len(training_loader)}")
         images = images.to(torch.float32)
         labels = torch.tensor(index_labels(labels.tolist()))
         outputs = model(images)
