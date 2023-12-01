@@ -1,6 +1,5 @@
 import os
 import random
-import numpy
 import torch
 import pandas
 

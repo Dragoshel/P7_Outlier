@@ -8,11 +8,11 @@ from torch.utils.data import DataLoader, Dataset, random_split
 
 from torchvision.transforms import PILToTensor
 
-generator = torch.Generator()
-generator.manual_seed(10)
 
 
 def testing_data_loader(no_outliers: int) -> (DataLoader, list):
+    generator = torch.Generator()
+    generator.manual_seed(10)
     dataset, labels = _union_set(no_outliers)
     batch_size = int(math.ceil(len(dataset)/20))
     
@@ -20,7 +20,9 @@ def testing_data_loader(no_outliers: int) -> (DataLoader, list):
     
     return DataLoader(dataset, batch_size=batch_size, shuffle=True, generator=generator), labels
 
-def _union_set(no_outliers: int) -> (Dataset, list):
+def _union_set(no_outliers: int) -> (Dataset, list):  
+    generator = torch.Generator()
+    generator.manual_seed(10)
     clothes_set = torchvision.datasets.FashionMNIST('testing/FMNIST', train=True, download=True, transform=PILToTensor())
     discard = len(clothes_set) - no_outliers
     outlier_set, _ = random_split(clothes_set,

@@ -63,8 +63,8 @@ class CNN_model():
     test_data = MNIST(root='data/cnn/testing', train=False, download=True, transform=PILToTensor())
     outlier_data = FashionMNIST(root='data/cnn/outlier', train=True, download=True, transform=PILToTensor())
     
-    def __init__(self, classes, batch_size, no_epoch, model_folder, accuracy="acc"):
-        self.model_path = f'{model_folder}/cnn_model_{len(classes)}_{batch_size}_{no_epoch}_{accuracy}.pth'
+    def __init__(self, classes, batch_size, no_epoch, model_folder, seed, accuracy="acc"):
+        self.model_path = f'{model_folder}/cnn_model_{seed}_{len(classes)}_{batch_size}_{no_epoch}_{accuracy}.pth'
         print(f"[INFO] Loading CNN {self.model_path}")
         self.batch_size = batch_size
         self.epochs = no_epoch
