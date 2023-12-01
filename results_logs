@@ -1,0 +1,268 @@
+more_normal
+Normal classes: [9, 0, 6, 3, 4, 8, 1], Novel classes: [2, 5, 7]
+[INFO] Loading CNN cnns/cnn_model_10_7_128_20_98_31.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-images-idx3-ubyte.gz to testing/FMNIST/FashionMNIST/raw/train-images-idx3-ubyte.gz
+100%|█████████████████████████| 26421880/26421880 [00:01<00:00, 25363899.85it/s]
+Extracting testing/FMNIST/FashionMNIST/raw/train-images-idx3-ubyte.gz to testing/FMNIST/FashionMNIST/raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/train-labels-idx1-ubyte.gz to testing/FMNIST/FashionMNIST/raw/train-labels-idx1-ubyte.gz
+100%|████████████████████████████████| 29515/29515 [00:00<00:00, 1053474.85it/s]
+Extracting testing/FMNIST/FashionMNIST/raw/train-labels-idx1-ubyte.gz to testing/FMNIST/FashionMNIST/raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-images-idx3-ubyte.gz to testing/FMNIST/FashionMNIST/raw/t10k-images-idx3-ubyte.gz
+100%|███████████████████████████| 4422102/4422102 [00:00<00:00, 13846596.11it/s]
+Extracting testing/FMNIST/FashionMNIST/raw/t10k-images-idx3-ubyte.gz to testing/FMNIST/FashionMNIST/raw
+
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz
+Downloading http://fashion-mnist.s3-website.eu-central-1.amazonaws.com/t10k-labels-idx1-ubyte.gz to testing/FMNIST/FashionMNIST/raw/t10k-labels-idx1-ubyte.gz
+100%|█████████████████████████████████| 5148/5148 [00:00<00:00, 30497566.37it/s]
+Extracting testing/FMNIST/FashionMNIST/raw/t10k-labels-idx1-ubyte.gz to testing/FMNIST/FashionMNIST/raw
+
+Downloading http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz
+Downloading http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz to testing/MNIST/MNIST/raw/train-images-idx3-ubyte.gz
+100%|███████████████████████████| 9912422/9912422 [00:00<00:00, 23381665.63it/s]
+Extracting testing/MNIST/MNIST/raw/train-images-idx3-ubyte.gz to testing/MNIST/MNIST/raw
+
+Downloading http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz
+Downloading http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz to testing/MNIST/MNIST/raw/train-labels-idx1-ubyte.gz
+100%|██████████████████████████████| 28881/28881 [00:00<00:00, 112058921.21it/s]
+Extracting testing/MNIST/MNIST/raw/train-labels-idx1-ubyte.gz to testing/MNIST/MNIST/raw
+
+Downloading http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz
+Downloading http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz to testing/MNIST/MNIST/raw/t10k-images-idx3-ubyte.gz
+100%|████████████████████████████| 1648877/1648877 [00:00<00:00, 9250370.36it/s]
+Extracting testing/MNIST/MNIST/raw/t10k-images-idx3-ubyte.gz to testing/MNIST/MNIST/raw
+
+Downloading http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
+Downloading http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz to testing/MNIST/MNIST/raw/t10k-labels-idx1-ubyte.gz
+100%|█████████████████████████████████| 4542/4542 [00:00<00:00, 12658158.65it/s]
+Extracting testing/MNIST/MNIST/raw/t10k-labels-idx1-ubyte.gz to testing/MNIST/MNIST/raw
+
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 524
+more_novel
+Normal classes: [9, 0, 6], Novel classes: [1, 2, 3, 4, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_10_3_128_20_99_25.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 563
+[INFO] Emptying buffer of size 593
+[INFO] Emptying buffer of size 622
+same_amount
+Normal classes: [9, 0, 6, 3, 4], Novel classes: [1, 2, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_10_5_128_20_98_76.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 597
+less_outliers
+Normal classes: [9, 0, 6, 3, 4], Novel classes: [1, 2, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_10_5_128_20_98_76.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 14285 instances
+[INFO] Emptying buffer of size 507
+more_outliers
+Normal classes: [9, 0, 6, 3, 4], Novel classes: [1, 2, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_10_5_128_20_98_76.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 23000 instances
+[INFO] Emptying buffer of size 511
+same_outliers
+Normal classes: [9, 0, 6, 3, 4], Novel classes: [1, 2, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_10_5_128_20_98_76.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 20000 instances
+[INFO] Emptying buffer of size 731
+[[5], [9, 13, 17], [4], [2], [1], [2]]
+more_normal
+Normal classes: [2, 4, 1, 6, 9, 8, 7], Novel classes: [0, 3, 5]
+[INFO] Loading CNN cnns/cnn_model_20_7_128_20_98_34.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 551
+[INFO] Emptying buffer of size 559
+more_novel
+Normal classes: [2, 4, 1], Novel classes: [0, 3, 5, 6, 7, 8, 9]
+[INFO] Loading CNN cnns/cnn_model_20_3_128_20_99_46.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 556
+[INFO] Emptying buffer of size 541
+[INFO] Emptying buffer of size 569
+same_amount
+Normal classes: [2, 4, 1, 6, 9], Novel classes: [0, 3, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_20_5_128_20_98_55.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 557
+[INFO] Emptying buffer of size 515
+[INFO] Emptying buffer of size 607
+less_outliers
+Normal classes: [2, 4, 1, 6, 9], Novel classes: [0, 3, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_20_5_128_20_98_55.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 14285 instances
+[INFO] Emptying buffer of size 526
+[INFO] Emptying buffer of size 502
+more_outliers
+Normal classes: [2, 4, 1, 6, 9], Novel classes: [0, 3, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_20_5_128_20_98_55.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 23000 instances
+[INFO] Emptying buffer of size 662
+[INFO] Emptying buffer of size 752
+same_outliers
+Normal classes: [2, 4, 1, 6, 9], Novel classes: [0, 3, 5, 7, 8]
+[INFO] Loading CNN cnns/cnn_model_20_5_128_20_98_55.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 20000 instances
+[INFO] Emptying buffer of size 551
+[INFO] Emptying buffer of size 747
+[[6, 10], [9, 14, 19], [6, 10, 15], [4, 6], [3, 5], [3, 5]]
+more_normal
+Normal classes: [8, 4, 0, 9, 5, 1, 2], Novel classes: [3, 6, 7]
+[INFO] Loading CNN cnns/cnn_model_30_7_128_20_98_8.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 551
+[INFO] Emptying buffer of size 503
+[INFO] Emptying buffer of size 527
+more_novel
+Normal classes: [8, 4, 0], Novel classes: [1, 2, 3, 5, 6, 7, 9]
+[INFO] Loading CNN cnns/cnn_model_30_3_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 514
+[INFO] Emptying buffer of size 526
+[INFO] Emptying buffer of size 588
+[INFO] Emptying buffer of size 575
+[INFO] Emptying buffer of size 561
+same_amount
+Normal classes: [8, 4, 0, 9, 5], Novel classes: [1, 2, 3, 6, 7]
+[INFO] Loading CNN cnns/cnn_model_30_5_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 568
+[INFO] Emptying buffer of size 587
+[INFO] Emptying buffer of size 576
+[INFO] Emptying buffer of size 615
+less_outliers
+Normal classes: [8, 4, 0, 9, 5], Novel classes: [1, 2, 3, 6, 7]
+[INFO] Loading CNN cnns/cnn_model_30_5_128_20_98_86.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 14285 instances
+[INFO] Emptying buffer of size 575
+[INFO] Emptying buffer of size 514
+[INFO] Emptying buffer of size 558
+more_outliers
+Normal classes: [8, 4, 0, 9, 5], Novel classes: [1, 2, 3, 6, 7]
+[INFO] Loading CNN cnns/cnn_model_30_5_128_20_98_86.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 23000 instances
+[INFO] Emptying buffer of size 592
+[INFO] Emptying buffer of size 540
+[INFO] Emptying buffer of size 987
+[INFO] Emptying buffer of size 911
+[INFO] Emptying buffer of size 894
+[INFO] Emptying buffer of size 905
+[INFO] Emptying buffer of size 853
+[INFO] Emptying buffer of size 873
+[INFO] Emptying buffer of size 892
+[INFO] Emptying buffer of size 909
+same_outliers
+Normal classes: [8, 4, 0, 9, 5], Novel classes: [1, 2, 3, 6, 7]
+[INFO] Loading CNN cnns/cnn_model_30_5_128_20_98_86.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 20000 instances
+[INFO] Emptying buffer of size 532
+[INFO] Emptying buffer of size 546
+[INFO] Emptying buffer of size 895
+[[6, 10, 14], [5, 8, 11, 14, 17], [3, 6, 9, 12], [2, 4, 6], [1, 3, 5, 7, 9, 11, 13, 15, 17, 19], [1, 3, 5]]
+more_normal
+Normal classes: [7, 8, 0, 1, 2, 6, 4], Novel classes: [3, 5, 9]
+[INFO] Loading CNN cnns/cnn_model_40_7_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 525
+more_novel
+Normal classes: [7, 8, 0], Novel classes: [1, 2, 3, 4, 5, 6, 9]
+[INFO] Loading CNN cnns/cnn_model_40_3_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 543
+same_amount
+Normal classes: [7, 8, 0, 1, 2], Novel classes: [3, 4, 5, 6, 9]
+[INFO] Loading CNN cnns/cnn_model_40_5_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 575
+[INFO] Emptying buffer of size 556
+less_outliers
+Normal classes: [7, 8, 0, 1, 2], Novel classes: [3, 4, 5, 6, 9]
+[INFO] Loading CNN cnns/cnn_model_40_5_128_20_98_97.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 14285 instances
+[INFO] Emptying buffer of size 503
+[INFO] Emptying buffer of size 584
+more_outliers
+Normal classes: [7, 8, 0, 1, 2], Novel classes: [3, 4, 5, 6, 9]
+[INFO] Loading CNN cnns/cnn_model_40_5_128_20_98_97.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 23000 instances
+[INFO] Emptying buffer of size 516
+same_outliers
+Normal classes: [7, 8, 0, 1, 2], Novel classes: [3, 4, 5, 6, 9]
+[INFO] Loading CNN cnns/cnn_model_40_5_128_20_98_97.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 20000 instances
+[INFO] Emptying buffer of size 511
+[[6], [5], [6, 10], [5, 8], [4], [4]]
+more_normal
+Normal classes: [7, 4, 5, 9, 1, 3, 2], Novel classes: [0, 6, 8]
+[INFO] Loading CNN cnns/cnn_model_50_7_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 508
+[INFO] Emptying buffer of size 611
+[INFO] Emptying buffer of size 603
+more_novel
+Normal classes: [7, 4, 5], Novel classes: [0, 1, 2, 3, 6, 8, 9]
+[INFO] Loading CNN cnns/cnn_model_50_3_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 504
+[INFO] Emptying buffer of size 561
+[INFO] Emptying buffer of size 542
+[INFO] Emptying buffer of size 566
+[INFO] Emptying buffer of size 504
+[INFO] Emptying buffer of size 569
+same_amount
+Normal classes: [7, 4, 5, 9, 1], Novel classes: [0, 2, 3, 6, 8]
+[INFO] Loading CNN cnns/cnn_model_50_5_128_20_acc.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 10204 instances
+[INFO] Emptying buffer of size 528
+[INFO] Emptying buffer of size 605
+[INFO] Emptying buffer of size 643
+less_outliers
+Normal classes: [7, 4, 5, 9, 1], Novel classes: [0, 2, 3, 6, 8]
+[INFO] Loading CNN cnns/cnn_model_50_5_128_20_99_03.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 14285 instances
+[INFO] Emptying buffer of size 508
+more_outliers
+Normal classes: [7, 4, 5, 9, 1], Novel classes: [0, 2, 3, 6, 8]
+[INFO] Loading CNN cnns/cnn_model_50_5_128_20_99_03.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 23000 instances
+[INFO] Emptying buffer of size 609
+same_outliers
+Normal classes: [7, 4, 5, 9, 1], Novel classes: [0, 2, 3, 6, 8]
+[INFO] Loading CNN cnns/cnn_model_50_5_128_20_99_03.pth
+[INFO] Loading models from folder models_50_50_3000_4_49...
+Testing set has 20000 instances
+[INFO] Emptying buffer of size 551
+[[4, 8, 12], [4, 7, 10, 13, 16, 19], [4, 8, 12], [3], [2], [2]]
