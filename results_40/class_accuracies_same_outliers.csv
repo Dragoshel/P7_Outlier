@@ -1,0 +1,5 @@
+,2,1,0
+DataType.NORMAL,0.18,0.42,0.96
+DataType.NOVEL,0.05,0.13,0.01
+DataType.OUTLIER,0.77,0.46,0.03
+total,10000.0,4851.0,5149.0
