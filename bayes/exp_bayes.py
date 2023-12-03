@@ -79,11 +79,21 @@ class Bayes():
         
     def _calculate_class_accuracies(self):
         for types in self.class_accuracies.values():
-            types[DataType.NORMAL] = round(types[DataType.NORMAL]/types["total"], 2)
-            types[DataType.NOVEL] = round(types[DataType.NOVEL]/types["total"], 2)
-            types[DataType.OUTLIER] = round(types[DataType.OUTLIER]/types["total"], 2)
+            types[DataType.NORMAL] = round(types[DataType.NORMAL]/types["total"], 4)
+            types[DataType.NOVEL] = round(types[DataType.NOVEL]/types["total"], 4)
+            types[DataType.OUTLIER] = round(types[DataType.OUTLIER]/types["total"], 4)
+            
+    def _calculate_accuracy(self, batch, type, total):
+        if total == 0 and batch != 0:
+            return self.accuracy_over_time[type][batch-1]
+        elif total == 0:
+            return 0
+        else:
+            return round(self.accuracy_over_time[type][batch]/total, 2)
 
     def run(self, has_buffer):
+        total_data = 0
+        total_correct = 0
         test_loader, test_labels = testing_data_loader(self.outliers)
         for batch, (images, labels) in enumerate(test_loader):
             no_outlier = 0
@@ -139,18 +149,20 @@ class Bayes():
                 
                 self.accuracy_over_time[pred_label][batch] += 1 if pred_label == actual_label else 0
                 self.accuracy_over_time['all'][batch] += 1 if pred_label == actual_label else 0
+                total_correct += 1 if pred_label == actual_label else 0
             
-            self.accuracy_over_time[DataType.NORMAL][batch] = round(self.accuracy_over_time[DataType.NORMAL][batch]/no_normal, 2)
-            self.accuracy_over_time[DataType.NOVEL][batch] = round(self.accuracy_over_time[DataType.NOVEL][batch]/no_novel, 2)
-            self.accuracy_over_time[DataType.OUTLIER][batch] = round(self.accuracy_over_time[DataType.OUTLIER][batch]/no_outlier, 2)
-            self.accuracy_over_time["all"][batch] = round(self.accuracy_over_time['all'][batch]/total, 2)
-
+            self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, no_normal)
+            self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, no_novel)
+            self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, no_outlier)
+            self.accuracy_over_time["all"][batch] = self._calculate_accuracy(batch, 'all', total)
+            total_data += total
             if len(self.buffer) > 500 and has_buffer:
                 print(f"[INFO] Emptying buffer of size {len(self.buffer)}")
                 self.buffer.empty()
                 self.buffer_batches.append(batch)
         
         self._calculate_class_accuracies()
+        print(f"[ACCURACY] {total_correct/total_data}")
     
     def save_accuracy(self, extension, folder):
         if not os.path.exists(f"results_{folder}"):
