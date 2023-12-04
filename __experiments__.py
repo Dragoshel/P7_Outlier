@@ -70,6 +70,15 @@ experiments = {
     }
 }
 
+# Novel experiments:
+seeds = [10, 20, 30, 40, 50]
+novel_experiment = {
+    DataType.NORMAL: 5,
+    DataType.NOVEL: 5,
+    DataType.OUTLIER: 0.02,
+    "cnn": ["98_76", "98_55", "98_86", "98_97", "99_03"]
+}
+
 def parse():
     parser = argparse.ArgumentParser(
         prog='Run different commands on P7_Outlier models.',
@@ -92,7 +101,7 @@ def parse():
     parser.add_argument('--threshold', action='store_true', help='Find the tresholds')
     
     parser_bayes = subparsers.add_parser('bayes', help='Run commands on bayes model.')
-    parser_bayes.add_argument('--test', action='store_true', help='Test the model.')
+    parser_bayes.add_argument('--novel', action='store_true', help='Test the model on novelties.')
 
     return parser.parse_args()
 
@@ -175,27 +184,45 @@ def main():
         bayes.threshold(DataType.OUTLIER)
 
     elif args.model == 'bayes':
-        for i, seed in enumerate(seeds):
-            buffer_times = []
-            for experiment, setup in experiments.items():
-                print(experiment)
+        if args.novel:
+            for i, seed in enumerate(seeds):
+                buffer_times = []
+                print(seed)
                 random.seed(seed)
                 torch.manual_seed(10)
-                pick_classes(setup[DataType.NORMAL])
-                cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', seed, setup["cnn"][i])
-                if setup[DataType.NORMAL] == 5:
-                    experiments["less_outliers"]["cnn"][i] = cnn.accuracy
-                    experiments["more_outliers"]["cnn"][i] = cnn.accuracy
-                    experiments["same_outliers"]["cnn"][i] = cnn.accuracy
+                pick_classes(novel_experiment[DataType.NORMAL])
+                cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', seed, novel_experiment["cnn"][i])
                     
                 hmms = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
                 hmms.models_for_classes(get_normal_classes())
                 
-                bayes = Bayes(get_normal_classes(), get_novel_classes(), setup[DataType.OUTLIER], cnn, hmms)
+                bayes = Bayes(get_normal_classes(), get_novel_classes(), novel_experiment[DataType.OUTLIER], cnn, hmms)
                 bayes.run(True)
-                bayes.save_accuracy(experiment, f"{seed}")
+                bayes.save_accuracy("novels", f"{seed}")
                 buffer_times.append(bayes.buffer_batches)
-            print(buffer_times)
+                print(buffer_times)
+        else:    
+            for i, seed in enumerate(seeds):
+                buffer_times = []
+                for experiment, setup in experiments.items():
+                    print(experiment)
+                    random.seed(seed)
+                    torch.manual_seed(10)
+                    pick_classes(setup[DataType.NORMAL])
+                    cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', seed, setup["cnn"][i])
+                    if setup[DataType.NORMAL] == 5:
+                        experiments["less_outliers"]["cnn"][i] = cnn.accuracy
+                        experiments["more_outliers"]["cnn"][i] = cnn.accuracy
+                        experiments["same_outliers"]["cnn"][i] = cnn.accuracy
+                        
+                    hmms = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
+                    hmms.models_for_classes(get_normal_classes())
+                    
+                    bayes = Bayes(get_normal_classes(), get_novel_classes(), setup[DataType.OUTLIER], cnn, hmms)
+                    bayes.run(True)
+                    bayes.save_accuracy(experiment, f"{seed}")
+                    buffer_times.append(bayes.buffer_batches)
+                print(buffer_times)
                 
 if __name__ == "__main__":
     main()

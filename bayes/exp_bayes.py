@@ -164,6 +164,68 @@ class Bayes():
         self._calculate_class_accuracies()
         print(f"[ACCURACY] {total_correct/total_data}")
     
+    def run_novel(self, has_buffer):
+        test_loader, test_labels = testing_data_loader(self.outliers)
+        for batch, (images, labels) in enumerate(test_loader):
+            no_novel = 0
+            total = 0
+            
+            cnn_probabilities = self.cnn.get_probabilities(images)
+            hmm_probabilities = self.hmms.get_all_probabilities(images)
+            pred_labels = []
+            for i in range(len(labels)):
+                label = labels[i]
+
+                cnn_probability = cnn_probabilities[i]
+                hmm_probability = hmm_probabilities[i]
+
+                cnn_max_probability = torch.max(cnn_probability)
+                hmm_probability = torch.nan_to_num(hmm_probability, 0.0)
+                hmm_max_probability = torch.max(hmm_probability)
+                diff_max_probability = torch.max(abs(cnn_probability-hmm_probability))
+
+                original_label = test_labels[label] if label < len(test_labels) else label
+                if original_label in self.normal_classes:
+                    # Normal
+                    actual_label = DataType.NORMAL
+                elif original_label in self.novel_classes:
+                    # Novel
+                    actual_label = DataType.NOVEL
+                    no_novel += 1
+                else:
+                    # Outlier
+                    actual_label = DataType.OUTLIER
+                
+                labels[i] = actual_label
+                total += 1
+                
+                if cnn_max_probability >= 0.95 or diff_max_probability <= 0.05:
+                    # Normal
+                    pred_label = DataType.NORMAL
+                elif hmm_max_probability <= 0.05 or hmm_max_probability >= 0.8 and diff_max_probability >= 0.2:
+                    # Outlier
+                    pred_label = DataType.OUTLIER
+                else:
+                    # Novelty
+                    pred_label = DataType.NOVEL
+                    self.buffer.add(images[i])
+                pred_labels.append(pred_label)
+                
+                self.accuracy_over_time[pred_label][batch] += 1 if actual_label == DataType.NOVEL else 0
+                self.accuracy_over_time['all'][batch] += 1 if pred_label == actual_label else 0
+            
+            self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, no_novel)
+            self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, no_novel)
+            self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, no_novel)
+            self.accuracy_over_time["all"][batch] = self._calculate_accuracy(batch, 'all', total)
+            total_data += total
+            if len(self.buffer) > 500 and has_buffer:
+                print(f"[INFO] Emptying buffer of size {len(self.buffer)}")
+                self.buffer.empty()
+                self.buffer_batches.append(batch)
+        
+        self._calculate_class_accuracies()
+    
     def save_accuracy(self, extension, folder):
         if not os.path.exists(f"results_{folder}"):
             os.makedirs(f"results_{folder}")
