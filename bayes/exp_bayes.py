@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import torch
@@ -79,9 +80,10 @@ class Bayes():
         
     def _calculate_class_accuracies(self):
         for types in self.class_accuracies.values():
-            types[DataType.NORMAL] = round(types[DataType.NORMAL]/types["total"], 4)
-            types[DataType.NOVEL] = round(types[DataType.NOVEL]/types["total"], 4)
-            types[DataType.OUTLIER] = round(types[DataType.OUTLIER]/types["total"], 4)
+            if types["total"] != 0:
+                types[DataType.NORMAL] = round(types[DataType.NORMAL]/types["total"], 4)
+                types[DataType.NOVEL] = round(types[DataType.NOVEL]/types["total"], 4)
+                types[DataType.OUTLIER] = round(types[DataType.OUTLIER]/types["total"], 4)
             
     def _calculate_accuracy(self, batch, type, total):
         if total == 0 and batch != 0:
@@ -164,17 +166,30 @@ class Bayes():
         self._calculate_class_accuracies()
         print(f"[ACCURACY] {total_correct/total_data}")
     
-    def run_novel(self, has_buffer):
-        test_loader, test_labels = testing_data_loader(self.outliers)
+    def run_novel(self, novel_class, test_data_size=5000):
+        random.seed(10)
+        torch.manual_seed(10)
+        generator = torch.Generator()
+        generator.manual_seed(10)
+        test_data = Subset(self.train_data, [i for i, target in enumerate(self.train_data.targets) if target == novel_class])
+
+        discard = len(test_data) - test_data_size
+        test_data_subset, _ = random_split(test_data,
+            [test_data_size, discard],
+            generator=generator
+        )
+        print('Testing set has {} instances'.format(len(test_data_subset)))
+        
+        batch_size = int(test_data_size/20)
+        
+        test_loader = DataLoader(test_data_subset, batch_size=batch_size, shuffle=True, generator=generator)
+        
         for batch, (images, labels) in enumerate(test_loader):
-            no_novel = 0
             total = 0
             
             cnn_probabilities = self.cnn.get_probabilities(images)
             hmm_probabilities = self.hmms.get_all_probabilities(images)
-            pred_labels = []
             for i in range(len(labels)):
-                label = labels[i]
 
                 cnn_probability = cnn_probabilities[i]
                 hmm_probability = hmm_probabilities[i]
@@ -183,20 +198,6 @@ class Bayes():
                 hmm_probability = torch.nan_to_num(hmm_probability, 0.0)
                 hmm_max_probability = torch.max(hmm_probability)
                 diff_max_probability = torch.max(abs(cnn_probability-hmm_probability))
-
-                original_label = test_labels[label] if label < len(test_labels) else label
-                if original_label in self.normal_classes:
-                    # Normal
-                    actual_label = DataType.NORMAL
-                elif original_label in self.novel_classes:
-                    # Novel
-                    actual_label = DataType.NOVEL
-                    no_novel += 1
-                else:
-                    # Outlier
-                    actual_label = DataType.OUTLIER
-                
-                labels[i] = actual_label
                 total += 1
                 
                 if cnn_max_probability >= 0.95 or diff_max_probability <= 0.05:
@@ -209,21 +210,18 @@ class Bayes():
                     # Novelty
                     pred_label = DataType.NOVEL
                     self.buffer.add(images[i])
-                pred_labels.append(pred_label)
                 
-                self.accuracy_over_time[pred_label][batch] += 1 if actual_label == DataType.NOVEL else 0
-                self.accuracy_over_time['all'][batch] += 1 if pred_label == actual_label else 0
+                self.class_accuracies[DataType.NOVEL][pred_label] += 1
+                self.class_accuracies[DataType.NOVEL]["total"] += 1
+                self.accuracy_over_time[pred_label][batch] += 1
             
-            self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, no_novel)
-            self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, no_novel)
-            self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, no_novel)
-            self.accuracy_over_time["all"][batch] = self._calculate_accuracy(batch, 'all', total)
-            total_data += total
-            if len(self.buffer) > 500 and has_buffer:
+            self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, total)
+            self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, total)
+            self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, total)
+            if len(self.buffer) > 500:
                 print(f"[INFO] Emptying buffer of size {len(self.buffer)}")
                 self.buffer.empty()
                 self.buffer_batches.append(batch)
-        
         self._calculate_class_accuracies()
     
     def save_accuracy(self, extension, folder):

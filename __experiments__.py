@@ -75,8 +75,8 @@ seeds = [10, 20, 30, 40, 50]
 novel_experiment = {
     DataType.NORMAL: 5,
     DataType.NOVEL: 5,
-    DataType.OUTLIER: 0.02,
-    "cnn": ["98_76", "98_55", "98_86", "98_97", "99_03"]
+    DataType.OUTLIER: 0.0,
+    "cnn": "98_76"
 }
 
 def parse():
@@ -185,22 +185,21 @@ def main():
 
     elif args.model == 'bayes':
         if args.novel:
-            for i, seed in enumerate(seeds):
-                buffer_times = []
-                print(seed)
-                random.seed(seed)
-                torch.manual_seed(10)
-                pick_classes(novel_experiment[DataType.NORMAL])
-                cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', seed, novel_experiment["cnn"][i])
+            buffer_times = []
+            random.seed(10)
+            torch.manual_seed(10)
+            pick_classes(novel_experiment[DataType.NORMAL])
+            for novel in get_novel_classes():
+                cnn = CNN_model(get_normal_classes(), cnn_batch, cnn_epoch, 'cnns', 10, novel_experiment["cnn"])
                     
                 hmms = HMM_Models(fit, dists, obs, grid, hmm_accuracy)
                 hmms.models_for_classes(get_normal_classes())
                 
                 bayes = Bayes(get_normal_classes(), get_novel_classes(), novel_experiment[DataType.OUTLIER], cnn, hmms)
-                bayes.run(True)
-                bayes.save_accuracy("novels", f"{seed}")
+                bayes.run_novel(novel)
+                bayes.save_accuracy(f"novel_{novel}", f"novel_only")
                 buffer_times.append(bayes.buffer_batches)
-                print(buffer_times)
+            print(buffer_times)
         else:    
             for i, seed in enumerate(seeds):
                 buffer_times = []
