@@ -1,3 +1,5 @@
+import copy
+import pandas
 from pomegranate.distributions import Categorical
 from pomegranate.hmm import DenseHMM
 
@@ -10,6 +12,8 @@ import torch.nn.functional as F
 import torch
 import numpy
 import os
+
+from utils.data_types import DataType
 
 class HMM:
     img_size = 28
@@ -99,10 +103,15 @@ class HMM:
         train_images = train_images.to(torch.int64)
         # Format images to grids
         train_images = self._reform_images(train_images)
-        self.model.max_iter = 50
-        self.model.verbose = False
-        self.model.fit(train_images)
-        #self.model.from_summaries()
+        retrained_model = copy.deepcopy(self.model)
+        retrained_model.max_iter = 20
+        retrained_model.verbose = False        
+        retrained_model.fit(train_images)
+        preds = retrained_model.log_probability(train_images)
+        if not torch.isnan(preds).all():
+            self.model = retrained_model
+        else:
+            print(f"[WARN] HMM for digit {self.digit} could not be updated")
         
     def save_model(self):
         torch.save(self.model, self.model_path)
@@ -147,6 +156,34 @@ class HMM_Models:
             for digit in range(10):
                 hmm_for_digit = HMM(self.model_folder, pixels_per_square, observations, distributions, digit, True)
                 self.models.append(hmm_for_digit)
+                
+        self.class_accuracies = {
+            DataType.OUTLIER: {
+                DataType.NORMAL: 0,
+                DataType.NOVEL: 0,
+                DataType.OUTLIER: 0,
+                'total': 0
+            },
+            DataType.NOVEL: {
+                DataType.NORMAL: 0,
+                DataType.NOVEL: 0,
+                DataType.OUTLIER: 0,
+                'total': 0
+            },
+            DataType.NORMAL: {
+                DataType.NORMAL: 0,
+                DataType.NOVEL: 0,
+                DataType.OUTLIER: 0,
+                'total': 0
+            }
+        }
+        self.accuracy_over_time = {
+            DataType.NORMAL: [0]*20,
+            DataType.NOVEL: [0]*20,
+            DataType.OUTLIER: [0]*20,
+            'all': [0]*20
+        }
+        self.total_accuracy = 0
         
     def get_all_probabilities(self, images):
         probs = numpy.array([model.get_probabilities(images) for model in self.models])
@@ -182,3 +219,53 @@ class HMM_Models:
         print(f"[INFO] Accuracy score: {self.accuracy}%")
         if not os.path.exists(self.model_folder.replace(old_accuracy, self.accuracy)):
             os.rename(self.model_folder, self.model_folder.replace(old_accuracy, self.accuracy))
+
+    def classify(self, prob, batch, label):
+        if prob <= 0.7 and prob > 0.6:
+            # Normal
+            pred_label = DataType.NORMAL
+        elif prob > 0.7 or prob <= 0.3:
+            # Outlier
+            pred_label = DataType.OUTLIER
+        else:
+            # Novelty
+            pred_label = DataType.NOVEL
+        
+        self.class_accuracies[label][pred_label] += 1
+        self.class_accuracies[label]["total"] += 1
+        self.total_accuracy += 1 if pred_label == label else 0
+        
+        self.accuracy_over_time[pred_label][batch] += 1 if pred_label == label else 0
+        self.accuracy_over_time['all'][batch] += 1 if pred_label == label else 0
+        
+    def calculate_class_accuracies(self):
+        for types in self.class_accuracies.values():
+            if types["total"] != 0:
+                types[DataType.NORMAL] = round(types[DataType.NORMAL]/types["total"], 4)
+                types[DataType.NOVEL] = round(types[DataType.NOVEL]/types["total"], 4)
+                types[DataType.OUTLIER] = round(types[DataType.OUTLIER]/types["total"], 4)
+
+    def calculate_accuracy_for_batch(self, batch, no_normal, no_novel, no_outlier, total):
+        self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, no_normal)
+        self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, no_novel)
+        self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, no_outlier)
+        self.accuracy_over_time["all"][batch] = self._calculate_accuracy(batch, 'all', total)
+    
+    def _calculate_accuracy(self, batch, type, total):
+        if total == 0 and batch != 0:
+            return self.accuracy_over_time[type][batch-1]
+        elif total == 0:
+            return 0
+        else:
+            return round(self.accuracy_over_time[type][batch]/total, 2)
+        
+    def save_accuracy(self, extension, folder):
+        if not os.path.exists(f"results_{folder}"):
+            os.makedirs(f"results_{folder}")
+            
+        accuracy_data = pandas.DataFrame.from_dict(self.accuracy_over_time, orient="index")
+        accuracy_data.to_csv(f"results_{folder}/hmm_accuracy_{extension}.csv")
+        
+        overall_accuracy = pandas.DataFrame.from_dict(self.class_accuracies)
+        overall_accuracy.rename(columns={2: "Actual outlier", 1: "Actual Novel", 0: "Actual Normal"})
+        overall_accuracy.to_csv(f"results_{folder}/hmm_class_accuracies_{extension}.csv")

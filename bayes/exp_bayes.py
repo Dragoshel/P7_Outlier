@@ -39,12 +39,7 @@ class Bayes():
     def __init__(self, normal, novel, pct_outliers, cnn, hmms):
         self.normal_classes = normal
         self.novel_classes = novel
-        if pct_outliers < 1.0:
-            self.outliers = int(10000 / (1-pct_outliers) * pct_outliers)
-        elif pct_outliers > 1.0:
-            self.outliers = int(10000 * pct_outliers)
-        else:
-            self.outliers = 10000
+        self.outliers = int(10000 * pct_outliers)
         self.cnn = cnn
         self.hmms = hmms
         self.buffer = HMM_buffer(self.hmms)
@@ -94,9 +89,9 @@ class Bayes():
             return round(self.accuracy_over_time[type][batch]/total, 2)
 
     def run(self, has_buffer):
-        total_data = 0
-        total_correct = 0
         test_loader, test_labels = testing_data_loader(self.outliers)
+        total_accuracy = 0
+        total_data = 0
         for batch, (images, labels) in enumerate(test_loader):
             no_outlier = 0
             no_novel = 0
@@ -105,7 +100,6 @@ class Bayes():
             
             cnn_probabilities = self.cnn.get_probabilities(images)
             hmm_probabilities = self.hmms.get_all_probabilities(images)
-            pred_labels = []
             for i in range(len(labels)):
                 label = labels[i]
 
@@ -137,34 +131,44 @@ class Bayes():
                 if cnn_max_probability >= 0.95 or diff_max_probability <= 0.05:
                     # Normal
                     pred_label = DataType.NORMAL
-                elif hmm_max_probability <= 0.05 or hmm_max_probability >= 0.8 and diff_max_probability >= 0.2:
+                elif hmm_max_probability <= 0.3 or (hmm_max_probability > 0.7 and diff_max_probability >= 0.2) or cnn_max_probability < 0.6:
                     # Outlier
                     pred_label = DataType.OUTLIER
                 else:
                     # Novelty
                     pred_label = DataType.NOVEL
                     self.buffer.add(images[i])
-                pred_labels.append(pred_label)
+                    
+                self.cnn.classify(cnn_max_probability, batch, actual_label)
+                self.hmms.classify(hmm_max_probability, batch, actual_label)
                 
                 self.class_accuracies[actual_label][pred_label] += 1
                 self.class_accuracies[actual_label]["total"] += 1
                 
                 self.accuracy_over_time[pred_label][batch] += 1 if pred_label == actual_label else 0
                 self.accuracy_over_time['all'][batch] += 1 if pred_label == actual_label else 0
-                total_correct += 1 if pred_label == actual_label else 0
+                total_accuracy += 1 if pred_label == actual_label else 0
             
             self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, no_normal)
             self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, no_novel)
             self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, no_outlier)
             self.accuracy_over_time["all"][batch] = self._calculate_accuracy(batch, 'all', total)
+            self.hmms.calculate_accuracy_for_batch(batch, no_normal, no_novel, no_outlier, total)
+            self.cnn.calculate_accuracy_for_batch(batch, no_normal, no_novel, no_outlier, total)
             total_data += total
+            
             if len(self.buffer) > 500 and has_buffer:
                 print(f"[INFO] Emptying buffer of size {len(self.buffer)}")
                 self.buffer.empty()
                 self.buffer_batches.append(batch)
         
         self._calculate_class_accuracies()
-        print(f"[ACCURACY] {total_correct/total_data}")
+        self.hmms.calculate_class_accuracies()
+        self.cnn.calculate_class_accuracies()
+        bayes_acc = round(total_accuracy/total_data*100,2)
+        hmm_acc = round(self.hmms.total_accuracy/total_data*100,2)
+        cnn_acc = round(self.cnn.total_accuracy/total_data*100,2)
+        print(f"[ACCURACY] model: {bayes_acc}, hmm: {hmm_acc}, cnn: {cnn_acc}")
     
     def run_novel(self, novel_class, test_data_size=5000):
         random.seed(10)
@@ -234,6 +238,9 @@ class Bayes():
         overall_accuracy = pandas.DataFrame.from_dict(self.class_accuracies)
         overall_accuracy.rename(columns={2: "Actual outlier", 1: "Actual Novel", 0: "Actual Normal"})
         overall_accuracy.to_csv(f"results_{folder}/class_accuracies_{extension}.csv")
+        
+        self.hmms.save_accuracy(f"{extension}", f"{folder}")
+        self.cnn.save_accuracy(f"{extension}", f"{folder}")
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         random.seed(10)
