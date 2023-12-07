@@ -32,24 +32,6 @@ cnn_accuracy = "98_95"
 # Bayes experiments
 seeds = [10, 20, 30, 40, 50]
 experiments = {
-    "more_normal": {
-        DataType.NORMAL: 7,
-        DataType.NOVEL: 3,
-        DataType.OUTLIER: 0.02,
-        "cnn": ["98_31", "98_34", "98_8", "98_45", "98_39"]
-    },
-    "more_novel": {
-        DataType.NORMAL: 3,
-        DataType.NOVEL: 7,
-        DataType.OUTLIER: 0.02,
-        "cnn": ["99_25", "99_46", "99_46", "98_96", "99_69"]
-    },
-    "same_amount": {
-        DataType.NORMAL: 5,
-        DataType.NOVEL: 5,
-        DataType.OUTLIER: 0.02,
-        "cnn": ["98_76", "98_55", "98_86", "98_97", "99_03"]
-    },
     "less_outliers": {
         DataType.NORMAL: 5,
         DataType.NOVEL: 5,

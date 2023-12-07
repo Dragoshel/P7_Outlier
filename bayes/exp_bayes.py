@@ -207,7 +207,7 @@ class Bayes():
                 if cnn_max_probability >= 0.95 or diff_max_probability <= 0.05:
                     # Normal
                     pred_label = DataType.NORMAL
-                elif hmm_max_probability <= 0.05 or hmm_max_probability >= 0.8 and diff_max_probability >= 0.2:
+                elif hmm_max_probability <= 0.3 or (hmm_max_probability > 0.7 and diff_max_probability >= 0.2) or cnn_max_probability < 0.6:
                     # Outlier
                     pred_label = DataType.OUTLIER
                 else:
@@ -239,8 +239,8 @@ class Bayes():
         overall_accuracy.rename(columns={2: "Actual outlier", 1: "Actual Novel", 0: "Actual Normal"})
         overall_accuracy.to_csv(f"results_{folder}/class_accuracies_{extension}.csv")
         
-        self.hmms.save_accuracy(f"{extension}", f"{folder}")
-        self.cnn.save_accuracy(f"{extension}", f"{folder}")
+        #self.hmms.save_accuracy(f"{extension}", f"{folder}")
+        #self.cnn.save_accuracy(f"{extension}", f"{folder}")
 
     def threshold(self, type=DataType.NORMAL, classes=[0,1,2,3,4,5,6,7,8,9], test_data_size=5000, no_thresholds=20):
         random.seed(10)
