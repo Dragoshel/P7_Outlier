@@ -170,12 +170,12 @@ class Bayes():
         cnn_acc = round(self.cnn.total_accuracy/total_data*100,2)
         print(f"[ACCURACY] model: {bayes_acc}, hmm: {hmm_acc}, cnn: {cnn_acc}")
     
-    def run_novel(self, novel_class, test_data_size=5000):
+    def run_novel(self, novel_class, test_data_size=5000, buffer_size=500):
         random.seed(10)
         torch.manual_seed(10)
         generator = torch.Generator()
         generator.manual_seed(10)
-        test_data = Subset(self.train_data, [i for i, target in enumerate(self.train_data.targets) if target == novel_class])
+        test_data = Subset(self.train_data, [i for i, target in enumerate(self.train_data.targets) if target in novel_class])
 
         discard = len(test_data) - test_data_size
         test_data_subset, _ = random_split(test_data,
@@ -222,7 +222,7 @@ class Bayes():
             self.accuracy_over_time[DataType.NORMAL][batch] = self._calculate_accuracy(batch, DataType.NORMAL, total)
             self.accuracy_over_time[DataType.NOVEL][batch] = self._calculate_accuracy(batch, DataType.NOVEL, total)
             self.accuracy_over_time[DataType.OUTLIER][batch] = self._calculate_accuracy(batch, DataType.OUTLIER, total)
-            if len(self.buffer) > 500:
+            if len(self.buffer) > buffer_size:
                 print(f"[INFO] Emptying buffer of size {len(self.buffer)}")
                 self.buffer.empty()
                 self.buffer_batches.append(batch)
