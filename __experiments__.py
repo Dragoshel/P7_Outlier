@@ -71,7 +71,7 @@ experiments = {
 }
 
 # Novel experiments:
-buffer_sizes = [250, 500, 1000]
+buffer_sizes = [250]
 novel_experiment = {
     DataType.NORMAL: 5,
     DataType.NOVEL: 5,
@@ -196,7 +196,7 @@ def main():
                 hmms.models_for_classes(get_normal_classes())
                 
                 bayes = Bayes(get_normal_classes(), get_novel_classes(), novel_experiment[DataType.OUTLIER], cnn, hmms)
-                bayes.run_novel(get_novel_classes(), test_data_size=25000, buffer_size=size)
+                bayes.run_novel_converge(get_novel_classes(), buffer_size=size)
                 bayes.save_accuracy(f"novel_{size}", f"novel_only")
                 buffer_times.append(bayes.buffer_batches)
                 print(buffer_times)

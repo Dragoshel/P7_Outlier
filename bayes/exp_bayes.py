@@ -227,6 +227,63 @@ class Bayes():
                 self.buffer.empty()
                 self.buffer_batches.append(batch)
         self._calculate_class_accuracies()
+        
+    def run_novel_converge(self, novel_class, repeats=20, buffer_size=500):
+        random.seed(10)
+        torch.manual_seed(10)
+        generator = torch.Generator()
+        generator.manual_seed(10)
+        test_data = Subset(self.train_data, [i for i, target in enumerate(self.train_data.targets) if target in novel_class])
+
+        discard = len(test_data) - buffer_size
+        test_data_subset, _ = random_split(test_data,
+            [buffer_size, discard],
+            generator=generator
+        )
+        print('Testing set has {} instances'.format(len(test_data_subset)))
+                
+        test_loader = DataLoader(test_data_subset, batch_size=buffer_size, shuffle=True, generator=generator)
+        
+        for rep in repeats:
+            for images, labels in test_loader:
+                total = 0
+                
+                cnn_probabilities = self.cnn.get_probabilities(images)
+                hmm_probabilities = self.hmms.get_all_probabilities(images)
+                for i in range(len(labels)):
+
+                    cnn_probability = cnn_probabilities[i]
+                    hmm_probability = hmm_probabilities[i]
+
+                    cnn_max_probability = torch.max(cnn_probability)
+                    hmm_probability = torch.nan_to_num(hmm_probability, 0.0)
+                    hmm_max_probability = torch.max(hmm_probability)
+                    diff_max_probability = torch.max(abs(cnn_probability-hmm_probability))
+                    total += 1
+                    
+                    if cnn_max_probability >= 0.95 or diff_max_probability <= 0.05:
+                        # Normal
+                        pred_label = DataType.NORMAL
+                    elif hmm_max_probability <= 0.3 or (hmm_max_probability > 0.7 and diff_max_probability >= 0.2) or cnn_max_probability < 0.6:
+                        # Outlier
+                        pred_label = DataType.OUTLIER
+                    else:
+                        # Novelty
+                        pred_label = DataType.NOVEL
+                        self.buffer.add(images[i])
+                    
+                    self.class_accuracies[DataType.NOVEL][pred_label] += 1
+                    self.class_accuracies[DataType.NOVEL]["total"] += 1
+                    self.accuracy_over_time[pred_label][rep] += 1
+                
+                self.accuracy_over_time[DataType.NORMAL][rep] = self._calculate_accuracy(rep, DataType.NORMAL, total)
+                self.accuracy_over_time[DataType.NOVEL][rep] = self._calculate_accuracy(rep, DataType.NOVEL, total)
+                self.accuracy_over_time[DataType.OUTLIER][rep] = self._calculate_accuracy(rep, DataType.OUTLIER, total)
+                if len(self.buffer) > buffer_size:
+                    print(f"[INFO] Emptying buffer of size {len(self.buffer)}")
+                    self.buffer.empty()
+                    self.buffer_batches.append(rep)
+            self._calculate_class_accuracies()
     
     def save_accuracy(self, extension, folder):
         if not os.path.exists(f"results_{folder}"):
